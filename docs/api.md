@@ -49,7 +49,7 @@ CONTEST=$(curl -s -H "Authorization: Bearer $ROHAN" "$API/contests" | python -c 
 | GET    | `/contests/{id}/stats`                        | organizer        | counters to cross-check the leaderboard      |
 | GET    | `/ops/queue`                                  | organizer        | queue depth by state                         |
 | POST   | `/dev/failpoints`                             | organizer (dev)  | arm or disarm a failpoint                    |
-| POST   | `/internal/judge/leases`                      | judge            | claim work                                   |
+| POST   | `/internal/judge/leases`                      | judge            | claim work (optionally scoped to one contest) |
 | GET    | `/internal/judge/attempts/{id}/payload`        | judge            | re-read a held job                           |
 | POST   | `/internal/judge/attempts/{id}/heartbeat`      | judge            | extend a lease                               |
 | POST   | `/internal/judge/attempts/{id}/result`         | judge            | report a result (idempotent at one epoch)    |
@@ -182,3 +182,30 @@ docker compose logs api worker | grep demo-001
 {"ts": "...", "level": "INFO", "message": "verdict stored", "request_id": "demo-001",
  "attempt_id": "7b21...", "verdict": "ACCEPTED", "score": 100}
 ```
+
+## Judge plane: claiming work
+
+```bash
+curl -sX POST "$API/internal/judge/leases"   -H "Authorization: Bearer shodh_judge_dev_token" -H "Content-Type: application/json"   -d '{"worker_id": "worker-1", "capacity": 2}'
+```
+
+```json
+{
+  "lease_seconds": 30,
+  "leases": [
+    {"attempt_id": "7b21...", "lease_epoch": 1, "delivery_count": 1,
+     "lease_expires_at": "2026-11-17T12:03:17+00:00",
+     "payload": {"language": "python3", "source_code": "...", "runtime_config": {...},
+                 "test_cases": [{"test_case_id": "...", "ordinal": 1, "input": "...",
+                                 "expected_output": "..."}]}}
+  ]
+}
+```
+
+`lease_epoch` must be presented with the result; it is bumped on every lease and every reclaim,
+so a stale worker is refused with `409 stale_judge_result`. Adding `"contest_id"` to the request
+restricts the claim to one contest, which is how a pool of workers can be dedicated to a contest
+rather than draining whatever is next.
+
+This is the only route in the system that serves hidden inputs and expected outputs, and it
+requires the `judge` scope. A participant or organizer credential gets `403`.

@@ -171,9 +171,9 @@ bash scripts/evaluate.sh
 | Phase            | Condition                                        | Asserts                                            |
 | ---------------- | ------------------------------------------------ | -------------------------------------------------- |
 | `unit` (47)      | no database, no API                              | scoring, verdict mapping, comparison, state model  |
-| `functional` (63)| the running system, real workers                 | the normal flow, contracts, authorization, idempotency, rejudge, standings consistency, recovery |
+| `functional` (70)| the running system, real workers                 | the normal flow, contracts, identities, authorization, idempotency, rejudge, standings consistency, recovery |
 | `realrunner` (19)| `EXEC_MODE=docker` only                          | network, rootfs, uid, socket, pids, CPU, memory, output limits, cleanup, both languages |
-| `concurrency` (11)| workers stopped; the tests are the only judge   | competing claims, fencing, duplicate acks, out-of-order completion, bounded retries, late replaced results |
+| `concurrency` (12)| workers stopped; the tests are the only judge   | competing claims, fencing, duplicate acks, out-of-order completion, bounded retries, late replaced results, contest-scoped claims |
 
 Results land in `evidence/` as JSON, each labelled with the commit, the configured execution
 mode, the data version and whether the judge workers were running. Details and how to read them:

@@ -89,6 +89,7 @@ def main() -> int:
         "workloads": workloads,
         "bottleneck_investigations": bottlenecks,
         "demo_logs": sorted(path.name for path in EVIDENCE.glob("demo-*.log")),
+        "failure_drills": sorted(path.name for path in EVIDENCE.glob("failure-drill-*.log")),
     }
     path = EVIDENCE / "evaluation-summary.json"
     path.write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")

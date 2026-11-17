@@ -1,0 +1,173 @@
+{
+  "label": "api-only",
+  "started_at": "2026-11-17T12:36:38+0000",
+  "finished_at": "2026-11-17T12:37:38+0000",
+  "duration_s": 60.26,
+  "configuration": {
+    "concurrency": 32,
+    "submit_share": 0.3,
+    "request_mix": {
+      "POST /submissions": 0.3,
+      "GET /submissions/{id}": 0.1,
+      "GET /submissions": 0.1,
+      "GET /leaderboard": 0.5
+    },
+    "scoring_mode": "ICPC",
+    "seed": 20261117,
+    "drain_seconds": 0.0
+  },
+  "environment": {
+    "commit": "c25eb53",
+    "execution_mode": "docker",
+    "lease_seconds": 30,
+    "max_deliveries": 3,
+    "api_base_url": "http://api:8000",
+    "api_workers_env": "unset",
+    "worker_replicas_env": "unset",
+    "machine": {
+      "platform": "Linux-6.18.58.1-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+      "python": "3.12.16",
+      "cpu_count_visible": 8,
+      "mem_total_kb": 8050336,
+      "cgroup_memory_max": "max",
+      "cgroup_cpu_max": "max 100000",
+      "note": "Measured inside a container on this host; the API, the judge workers, PostgreSQL and this harness all share these resources, so absolute numbers are a property of the machine as much as of the code. Comparisons are only made between runs on the same host."
+    }
+  },
+  "dataset": {
+    "label": "api-only",
+    "contest_id": "66c23ae2-d847-493d-bb5c-d44e9289e356",
+    "participants": 120,
+    "problems": 5,
+    "submissions_prefilled": 1800,
+    "verdicts_prefilled": 1800,
+    "cells": 600
+  },
+  "baseline_sequential": {
+    "GET /healthz": {
+      "count": 30,
+      "min_ms": 1.19,
+      "p50_ms": 1.29,
+      "p90_ms": 1.59,
+      "p95_ms": 1.7,
+      "p99_ms": 2.94,
+      "max_ms": 2.94,
+      "mean_ms": 1.38
+    },
+    "GET /leaderboard": {
+      "count": 30,
+      "min_ms": 10.79,
+      "p50_ms": 11.59,
+      "p90_ms": 13.0,
+      "p95_ms": 13.3,
+      "p99_ms": 51.79,
+      "max_ms": 51.79,
+      "mean_ms": 13.05
+    },
+    "GET /submissions": {
+      "count": 30,
+      "min_ms": 8.93,
+      "p50_ms": 9.59,
+      "p90_ms": 10.5,
+      "p95_ms": 10.77,
+      "p99_ms": 11.13,
+      "max_ms": 11.13,
+      "mean_ms": 9.66
+    },
+    "POST /submissions": {
+      "count": 10,
+      "min_ms": 13.83,
+      "p50_ms": 14.77,
+      "p90_ms": 21.0,
+      "p95_ms": 23.63,
+      "p99_ms": 23.63,
+      "max_ms": 23.63,
+      "mean_ms": 16.82
+    }
+  },
+  "results": {
+    "total_requests": 7331,
+    "throughput_rps": 121.66,
+    "errors": 0,
+    "error_rate": 0.0,
+    "per_endpoint": {
+      "GET /leaderboard": {
+        "count": 3623,
+        "min_ms": 50.03,
+        "p50_ms": 222.68,
+        "p90_ms": 413.86,
+        "p95_ms": 456.26,
+        "p99_ms": 553.74,
+        "max_ms": 796.68,
+        "mean_ms": 228.04,
+        "requests_per_second": 60.12,
+        "errors": 0,
+        "status_codes": {
+          "200": 3623
+        }
+      },
+      "GET /submissions": {
+        "count": 744,
+        "min_ms": 62.89,
+        "p50_ms": 266.94,
+        "p90_ms": 399.2,
+        "p95_ms": 419.37,
+        "p99_ms": 486.82,
+        "max_ms": 586.91,
+        "mean_ms": 227.14,
+        "requests_per_second": 12.35,
+        "errors": 0,
+        "status_codes": {
+          "200": 744
+        }
+      },
+      "GET /submissions/{id}": {
+        "count": 746,
+        "min_ms": 49.74,
+        "p50_ms": 117.5,
+        "p90_ms": 372.52,
+        "p95_ms": 401.5,
+        "p99_ms": 473.92,
+        "max_ms": 685.6,
+        "mean_ms": 202.6,
+        "requests_per_second": 12.38,
+        "errors": 0,
+        "status_codes": {
+          "200": 746
+        }
+      },
+      "POST /submissions": {
+        "count": 2218,
+        "min_ms": 95.55,
+        "p50_ms": 212.98,
+        "p90_ms": 608.33,
+        "p95_ms": 663.69,
+        "p99_ms": 772.2,
+        "max_ms": 996.83,
+        "mean_ms": 349.04,
+        "requests_per_second": 36.81,
+        "errors": 0,
+        "status_codes": {
+          "201": 2218
+        }
+      }
+    }
+  },
+  "judging": {
+    "attempts_created_during_run": 2218,
+    "attempt_states": {
+      "PENDING": 2218
+    },
+    "execution_modes": {
+      "not-judged-yet": 2218
+    },
+    "queue_delay": {},
+    "judge_wall_time": {},
+    "program_execution_time": {}
+  },
+  "consistency_after_run": {
+    "serving_matches_rebuild": true,
+    "serving_matches_naive": true,
+    "rows": 120
+  }
+}

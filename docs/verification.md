@@ -17,9 +17,9 @@ end-to-end walkthrough, and writes labelled results into `evidence/`.
 | Phase          | Marker        | Conditions                      | Count |
 | -------------- | ------------- | ------------------------------- | ----- |
 | rules          | `unit`        | no database, no API             | 47    |
-| the system     | `integration` | real workers, configured mode   | 63    |
+| the system     | `integration` | real workers, configured mode   | 70    |
 | the sandbox    | `realrunner`  | `EXEC_MODE=docker` only         | 19    |
-| the protocol   | `concurrency` | **judge workers stopped**       | 11    |
+| the protocol   | `concurrency` | **judge workers stopped**       | 12    |
 
 The concurrency phase stops the workers on purpose: those tests hold leases and report results
 themselves, so they have to be the only judge on the queue. They refuse to run otherwise
