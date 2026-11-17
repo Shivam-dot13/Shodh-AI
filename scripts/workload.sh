@@ -22,6 +22,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 COMPOSE="${COMPOSE:-docker compose}"
+# Git Bash rewrites arguments that look like absolute POSIX paths, which would mangle the
+# in-container paths below. Harmless everywhere else.
+export MSYS_NO_PATHCONV=1
 export COMMIT_SHA="${COMMIT_SHA:-$(git rev-parse --short HEAD 2>/dev/null || echo unknown)}"
 
 DURATION="${DURATION:-60}"
@@ -59,6 +62,7 @@ bash scripts/wait-for-api.sh "http://localhost:${API_PORT:-8000}" 60 >/dev/null
 $COMPOSE run --rm bench \
   --label end-to-end --dataset-file /srv/evidence/.dataset-end-to-end.json \
   --duration "$DURATION" --concurrency "$CONCURRENCY" \
+  --participants "$PARTICIPANTS" --problems "$PROBLEMS" --prefill "$PREFILL" \
   --submit-share "$SUBMIT_SHARE" --drain 240
 
 say "run 2/3  api-only: judge workers stopped, nothing is executed"
@@ -66,6 +70,7 @@ $COMPOSE stop worker
 $COMPOSE run --rm bench \
   --label api-only --dataset-file /srv/evidence/.dataset-api-only.json \
   --duration "$DURATION" --concurrency "$CONCURRENCY" \
+  --participants "$PARTICIPANTS" --problems "$PROBLEMS" --prefill "$PREFILL" \
   --submit-share "$SUBMIT_SHARE"
 
 # Still with the judge stopped: this run measures two read paths, so sandbox start-ups on the

@@ -1,10 +1,10 @@
 {
   "data_version": "seed-v1",
   "programs_version": "programs-v1",
-  "seeded_at": "2026-11-17T12:15:30.539247+00:00",
+  "seeded_at": "2026-11-17T12:23:03.283529+00:00",
   "window_anchor": "2026-11-17T12:00:00+00:00",
   "execution_mode": "docker",
-  "commit": "2a046fe",
+  "commit": "unknown",
   "service_tokens": {
     "judge": "shodh_judge_dev_token",
     "platform_admin": "shodh_platform_admin_dev_token"

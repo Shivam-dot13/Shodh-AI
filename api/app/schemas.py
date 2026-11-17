@@ -314,6 +314,14 @@ class RejudgeIn(BaseModel):
     test_suite_id: uuid.UUID
 
 
+class BulkRejudgeOut(BaseModel):
+    problem_id: uuid.UUID
+    submissions_matched: int
+    attempts_queued: int
+    problem_version_id: uuid.UUID
+    test_suite_id: uuid.UUID
+
+
 # --------------------------------------------------------------------------- leaderboard
 
 

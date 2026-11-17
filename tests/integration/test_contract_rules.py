@@ -255,3 +255,60 @@ class TestUnseenData:
         board = organizer_client.get(f"/contests/{contest_id}/leaderboard").json()
         assert board["scoring_mode"] == "POINTS"
         assert board["items"][0]["points"] == 50
+
+
+class TestIdentityRoutes:
+    def test_me_describes_each_credential_kind(self, manifest, clients, tokens):
+        participant = clients(tokens["rohan@acme.test"], "rohan").get("/me").json()
+        assert participant["scope"] == "user"
+        assert participant["user"]["role"] == "PARTICIPANT"
+        assert participant["user"]["email"] == "rohan@acme.test"
+
+        judge = clients(manifest["service_tokens"]["judge"], "judge").get("/me").json()
+        assert judge["scope"] == "judge" and judge["user"] is None
+
+        admin = clients(manifest["service_tokens"]["platform_admin"], "admin").get("/me").json()
+        assert admin["scope"] == "platform_admin" and admin["user"] is None
+
+    def test_the_dev_token_fixture_mints_a_usable_token(self, clients, tokens, manifest):
+        anonymous = clients(None, "anonymous")
+        minted = anonymous.post("/auth/dev/token", json={"email": "meera@acme.test"})
+        assert minted.status_code == 200, minted.text
+        body = minted.json()
+        assert body["user"]["email"] == "meera@acme.test"
+
+        issued = clients(body["token"], "minted")
+        assert issued.get("/me").json()["user"]["id"] == body["user"]["id"]
+        assert issued.get("/contests").status_code == 200
+
+        unknown = anonymous.post("/auth/dev/token", json={"email": "nobody@nowhere.test"})
+        assert unknown.status_code == 404
+
+    def test_an_organization_is_readable_only_by_its_own_members(self, manifest, clients, tokens):
+        acme_id = manifest["organizations"]["acme-university"]["id"]
+        borealis_id = manifest["organizations"]["borealis-institute"]["id"]
+        rohan = clients(tokens["rohan@acme.test"], "rohan")
+        assert rohan.get(f"/orgs/{acme_id}").json()["slug"] == "acme-university"
+        assert rohan.get(f"/orgs/{borealis_id}").status_code == 404
+
+    def test_an_organizer_can_create_an_identity_in_its_own_organization(self, manifest, clients, tokens):
+        acme_id = manifest["organizations"]["acme-university"]["id"]
+        organizer = clients(tokens["organizer@acme.test"], "organizer")
+        created = organizer.post(
+            f"/orgs/{acme_id}/users",
+            json={
+                "email": f"newcomer-{uuid.uuid4().hex[:8]}@acme.test",
+                "display_name": "Newcomer",
+                "role": "PARTICIPANT",
+            },
+        )
+        assert created.status_code == 201, created.text
+        assert created.json()["org_id"] == acme_id
+        assert clients(created.json()["token"], "newcomer").get("/me").json()["scope"] == "user"
+
+        duplicate = organizer.post(
+            f"/orgs/{acme_id}/users",
+            json={"email": "rohan@acme.test", "display_name": "Impostor", "role": "PARTICIPANT"},
+        )
+        assert duplicate.status_code == 409
+        assert duplicate.json()["error"]["code"] == "duplicate_email"
