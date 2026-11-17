@@ -44,7 +44,9 @@ def claim(
     presented with the result; the epoch is bumped on every lease and on every reclaim, so a
     stale worker is fenced out.
     """
-    leases = judge_queue.lease_jobs(session, worker_id=body.worker_id, capacity=body.capacity)
+    leases = judge_queue.lease_jobs(
+        session, worker_id=body.worker_id, capacity=body.capacity, contest_id=body.contest_id
+    )
     out = []
     for lease in leases:
         payload = judge_queue.build_payload(session, lease.attempt_id)

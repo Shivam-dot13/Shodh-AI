@@ -362,6 +362,9 @@ class LeaderboardOut(BaseModel):
 class LeaseRequest(BaseModel):
     worker_id: str = Field(min_length=1, max_length=80)
     capacity: int = Field(default=1, ge=1, le=16)
+    # Optional: restrict this claim to one contest, so a pool of workers can be dedicated to it
+    # instead of draining whatever is next in the global queue.
+    contest_id: uuid.UUID | None = None
 
 
 class LeaseOut(BaseModel):

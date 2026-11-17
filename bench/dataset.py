@@ -13,7 +13,9 @@ import json
 import os
 import pathlib
 import random
+import threading
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 
 import httpx
@@ -21,6 +23,7 @@ import httpx
 API = os.environ.get("API_BASE_URL", "http://api:8000")
 EVIDENCE = pathlib.Path(os.environ.get("EVIDENCE_DIR", "/srv/evidence"))
 PROGRAMS = pathlib.Path("/srv/seed/data/programs")
+PREFILL_CONCURRENCY = int(os.environ.get("PREFILL_CONCURRENCY", "12"))
 
 VERDICT_MIX = (
     ("PASSED", 0.45),
@@ -184,67 +187,121 @@ def build(
 
 
 def _prefill(dataset: Dataset, submissions_per_cell: int, rng: random.Random) -> None:
-    """Fill the contest with history: real submissions, judged by a labelled synthetic judge."""
+    """Fill the contest with history: real submissions, judged by a labelled synthetic judge.
+
+    Setting up a dataset is not the thing being measured, so it runs concurrently. The verdict
+    *mix* stays deterministic: each (participant, problem, attempt) draws its status from the
+    seeded sequence by index, not from whatever order the requests happen to complete in.
+    """
     source = _program()
-    judge = client(dataset.judge_token)
-    sessions = {row["email"]: client(row["token"]) for row in dataset.participants}
-    try:
-        for row in dataset.participants:
-            participant = sessions[row["email"]]
-            for problem in dataset.problems:
-                for attempt in range(submissions_per_cell):
-                    created = participant.post(
-                        f"/contests/{dataset.contest_id}/submissions",
-                        json={
-                            "problem_id": problem["id"],
-                            "language": "python3",
-                            "source_code": f"{source}\n# {row['email']} {problem['slug']} {attempt}\n",
-                        },
-                        headers={"Idempotency-Key": f"prefill-{problem['slug']}-{attempt}"},
-                    )
-                    created.raise_for_status()
-                    dataset.submissions += 1
-        # Judge everything that is queued, in batches, through the real judge plane.
-        while True:
-            leases = judge.post(
-                "/internal/judge/leases", json={"worker_id": "bench-double", "capacity": 16}
-            )
-            leases.raise_for_status()
-            held = leases.json()["leases"]
-            if not held:
-                break
-            for lease in held:
-                status = _pick(rng)
-                payload = {
-                    "lease_epoch": lease["lease_epoch"],
-                    "worker_id": "bench-double",
-                    "exec_mode": "bench-double",
-                    "runner_image": "none",
-                    "compile": {"ok": True, "message": ""},
-                    "tests": [
-                        {
-                            "test_case_id": case["test_case_id"],
-                            "status": status,
-                            "time_ms": rng.randint(1, 40),
-                            "memory_kb": rng.randint(8_000, 20_000),
-                            "exit_code": 0,
-                            "output_bytes": 4,
-                            "truncated": False,
-                        }
-                        for case in lease["payload"]["test_cases"]
-                    ],
-                    "time_ms": rng.randint(1, 40),
-                    "memory_kb": rng.randint(8_000, 20_000),
+    plan: list[tuple[int, dict, dict, int]] = []
+    index = 0
+    for participant in dataset.participants:
+        for problem in dataset.problems:
+            for attempt in range(submissions_per_cell):
+                plan.append((index, participant, problem, attempt))
+                index += 1
+    statuses = {entry[0]: _pick(rng) for entry in plan}
+
+    local = threading.local()
+
+    def session_for(token: str) -> httpx.Client:
+        cache = getattr(local, "clients", None)
+        if cache is None:
+            cache = local.clients = {}
+        if token not in cache:
+            cache[token] = client(token)
+        return cache[token]
+
+    created = 0
+    lock = threading.Lock()
+
+    def create(entry) -> None:
+        nonlocal created
+        order, participant, problem, attempt = entry
+        response = session_for(participant["token"]).post(
+            f"/contests/{dataset.contest_id}/submissions",
+            json={
+                "problem_id": problem["id"],
+                "language": "python3",
+                "source_code": f"{source}\n# {participant['email']} {problem['slug']} {attempt}\n",
+            },
+            headers={
+                "Idempotency-Key": f"prefill-{problem['slug']}-{attempt}",
+                # The plan index travels as the request id, so the synthetic judge can give this
+                # submission the verdict the seeded sequence assigned to it regardless of the
+                # order the concurrent requests complete in.
+                "X-Request-Id": str(order),
+            },
+        )
+        response.raise_for_status()
+        with lock:
+            created += 1
+
+    with ThreadPoolExecutor(max_workers=PREFILL_CONCURRENCY) as pool:
+        list(pool.map(create, plan))
+    dataset.submissions += created
+
+    # Judge everything that is queued, through the real judge plane, with a labelled double.
+    judged = 0
+    judge_lease = client(dataset.judge_token)
+
+    def report(lease: dict) -> bool:
+        status = statuses.get(_order_of(lease), "PASSED")
+        payload = {
+            "lease_epoch": lease["lease_epoch"],
+            "worker_id": "bench-double",
+            "exec_mode": "bench-double",
+            "runner_image": "none",
+            "compile": {"ok": True, "message": ""},
+            "tests": [
+                {
+                    "test_case_id": case["test_case_id"],
+                    "status": status,
+                    "time_ms": 7,
+                    "memory_kb": 12_000,
+                    "exit_code": 0,
+                    "output_bytes": 4,
+                    "truncated": False,
                 }
-                response = judge.post(
-                    f"/internal/judge/attempts/{lease['attempt_id']}/result", json=payload
+                for case in lease["payload"]["test_cases"]
+            ],
+            "time_ms": 7,
+            "memory_kb": 12_000,
+        }
+        response = session_for(dataset.judge_token).post(
+            f"/internal/judge/attempts/{lease['attempt_id']}/result", json=payload
+        )
+        return response.status_code == 200
+
+    try:
+        with ThreadPoolExecutor(max_workers=PREFILL_CONCURRENCY) as pool:
+            while True:
+                leases = judge_lease.post(
+                    "/internal/judge/leases",
+                    json={
+                        "worker_id": "bench-double",
+                        "capacity": 16,
+                        # Stay inside this dataset: never touch work belonging to another contest.
+                        "contest_id": dataset.contest_id,
+                    },
                 )
-                if response.status_code == 200:
-                    dataset.judged += 1
+                leases.raise_for_status()
+                held = leases.json()["leases"]
+                if not held:
+                    break
+                judged += sum(1 for ok in pool.map(report, held) if ok)
     finally:
-        judge.close()
-        for session in sessions.values():
-            session.close()
+        judge_lease.close()
+    dataset.judged += judged
+
+
+def _order_of(lease: dict) -> int:
+    """The submission's position in the seeded plan, carried through as its request id."""
+    try:
+        return int(lease["payload"].get("request_id") or -1)
+    except (TypeError, ValueError):
+        return -1
 
 
 def _pick(rng: random.Random) -> str:

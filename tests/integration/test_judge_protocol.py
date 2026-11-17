@@ -405,3 +405,34 @@ def test_a_completed_attempt_cannot_be_rewritten(fresh_contest, programs, judge,
     )
     assert failure.status_code == 409
     assert attempt_rows(db, submission["id"])[0]["verdict"] == "ACCEPTED"
+
+
+def test_a_lease_can_be_restricted_to_one_contest(fresh_contest, programs, judge):
+    """A pool of workers can be dedicated to a contest instead of draining the global queue."""
+    mine = fresh_contest()
+    other = fresh_contest()
+    rohan_mine = mine["participants"]["rohan@acme.test"]
+    rohan_other = other["participants"]["rohan@acme.test"]
+    wanted = submit(rohan_mine, mine["contest_id"], mine["problem_id"], programs("accepted")).json()
+    unwanted = submit(
+        rohan_other, other["contest_id"], other["problem_id"], programs("accepted") + "\n# other\n"
+    ).json()
+
+    claimed: list[str] = []
+    for _ in range(6):
+        response = judge.post(
+            "/internal/judge/leases",
+            json={"worker_id": "scoped", "capacity": 8, "contest_id": mine["contest_id"]},
+        )
+        assert response.status_code == 200, response.text
+        held = response.json()["leases"]
+        if not held:
+            break
+        claimed.extend(h["attempt_id"] for h in held)
+
+    assert wanted["latest_attempt"]["id"] in claimed
+    assert unwanted["latest_attempt"]["id"] not in claimed, "a scoped claim crossed into another contest"
+
+    # The other contest's work is untouched and still claimable without the filter.
+    free = judge.post("/internal/judge/leases", json={"worker_id": "unscoped", "capacity": 8}).json()
+    assert unwanted["latest_attempt"]["id"] in [h["attempt_id"] for h in free["leases"]]

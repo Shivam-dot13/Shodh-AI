@@ -74,9 +74,13 @@ _CLAIM_SQL = text(
 WITH candidate AS (
     SELECT j.id
     FROM judge_jobs j
-    WHERE j.state = 'READY' AND j.available_at <= now()
+    JOIN judging_attempts a ON a.id = j.attempt_id
+    JOIN submissions s ON s.id = a.submission_id
+    WHERE j.state = 'READY'
+      AND j.available_at <= now()
+      AND (CAST(:contest_id AS uuid) IS NULL OR s.contest_id = CAST(:contest_id AS uuid))
     ORDER BY j.priority, j.available_at, j.id
-    FOR UPDATE SKIP LOCKED
+    FOR UPDATE OF j SKIP LOCKED
     LIMIT :capacity
 )
 UPDATE judge_jobs j
@@ -106,10 +110,24 @@ RETURNING a.lease_epoch
 )
 
 
-def lease_jobs(session: Session, *, worker_id: str, capacity: int = 1) -> list[Lease]:
+def lease_jobs(
+    session: Session, *, worker_id: str, capacity: int = 1, contest_id: uuid.UUID | None = None
+) -> list[Lease]:
+    """Claim up to `capacity` jobs, optionally restricted to one contest.
+
+    The filter exists so a pool of workers can be dedicated to a contest instead of draining
+    whatever is next in the global queue; the benchmark's synthetic judge uses it to stay inside
+    its own dataset.
+    """
     capacity = max(1, min(capacity, 16))
     claimed = session.execute(
-        _CLAIM_SQL, {"capacity": capacity, "worker_id": worker_id, "lease_seconds": settings.lease_seconds}
+        _CLAIM_SQL,
+        {
+            "capacity": capacity,
+            "worker_id": worker_id,
+            "lease_seconds": settings.lease_seconds,
+            "contest_id": contest_id,
+        },
     ).mappings().all()
     leases: list[Lease] = []
     for row in claimed:
