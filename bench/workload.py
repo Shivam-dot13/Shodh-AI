@@ -168,6 +168,53 @@ async def virtual_user(
                 recorder.add("GET /leaderboard", response.status_code, (time.perf_counter() - started) * 1000)
 
 
+def baseline(data: dataset_builder.Dataset, *, requests: int) -> dict:
+    """Uncontended latency: one request at a time, nothing else offered to the API.
+
+    Reported next to the concurrent run because a saturated percentile on its own says more
+    about the queue in front of the service than about the work the service does.
+    """
+    participant = data.participants[0]
+    source = (PROGRAMS / "sum_two_accepted.py").read_text(encoding="utf-8")
+    out: dict[str, dict] = {}
+    with dataset_builder.client(participant["token"]) as client:
+        probes = {
+            "GET /healthz": lambda: client.get("/healthz"),
+            "GET /leaderboard": lambda: client.get(
+                f"/contests/{data.contest_id}/leaderboard?limit=20"
+            ),
+            "GET /submissions": lambda: client.get(
+                f"/contests/{data.contest_id}/submissions?limit=20"
+            ),
+        }
+        for name, call in probes.items():
+            timings = []
+            for _ in range(requests):
+                started = time.perf_counter()
+                response = call()
+                timings.append((time.perf_counter() - started) * 1000)
+                response.raise_for_status()
+            out[name] = percentiles(timings)
+
+        timings = []
+        for index in range(max(5, requests // 3)):
+            key = f"baseline-{uuid.uuid4().hex}"
+            started = time.perf_counter()
+            response = client.post(
+                f"/contests/{data.contest_id}/submissions",
+                json={
+                    "problem_id": data.problems[0]["id"],
+                    "language": "python3",
+                    "source_code": f"{source}\n# baseline {index}\n",
+                },
+                headers={"Idempotency-Key": key},
+            )
+            timings.append((time.perf_counter() - started) * 1000)
+            response.raise_for_status()
+        out["POST /submissions"] = percentiles(timings)
+    return out
+
+
 def queue_metrics(engine, contest_id: str, since: str) -> dict:
     """Queue delay and execution time, read from the stored records."""
     with engine.connect() as connection:
@@ -222,16 +269,32 @@ async def run(args) -> dict:
     with dataset_builder.client() as probe:
         version = probe.get("/version").json()
 
-    print(f"[workload] building dataset: {args.participants} participants x {args.problems} problems", flush=True)
-    data = dataset_builder.build(
-        participants=args.participants,
-        problems=args.problems,
-        submissions_per_cell=args.prefill,
-        scoring_mode=args.scoring_mode,
-        seed=args.seed,
-        label=args.label,
-    )
-    print(f"[workload] dataset ready: {json.dumps(data.summary())}", flush=True)
+    handle = pathlib.Path(args.dataset_file) if args.dataset_file else None
+    if handle is not None and handle.exists():
+        data = dataset_builder.Dataset.load(handle)
+        print(f"[workload] reusing dataset {handle}: {json.dumps(data.summary())}", flush=True)
+    else:
+        print(
+            f"[workload] building dataset: {args.participants} participants x {args.problems} problems",
+            flush=True,
+        )
+        data = dataset_builder.build(
+            participants=args.participants,
+            problems=args.problems,
+            submissions_per_cell=args.prefill,
+            scoring_mode=args.scoring_mode,
+            seed=args.seed,
+            label=args.label,
+        )
+        print(f"[workload] dataset ready: {json.dumps(data.summary())}", flush=True)
+        if handle is not None:
+            data.save(handle)
+            print(f"[workload] saved dataset handle to {handle}", flush=True)
+    if args.build_only:
+        return {"built_only": True, "dataset": data.summary()}
+
+    print(f"[workload] measuring uncontended baseline ({args.baseline} requests per endpoint)", flush=True)
+    baseline_stats = baseline(data, requests=args.baseline) if args.baseline else {}
 
     recorder = Recorder()
     started_wall = time.strftime("%Y-%m-%dT%H:%M:%S%z")
@@ -307,6 +370,7 @@ async def run(args) -> dict:
             "machine": machine(),
         },
         "dataset": data.summary(),
+        "baseline_sequential": baseline_stats,
         "results": {
             "total_requests": len(recorder.samples),
             "throughput_rps": round(len(recorder.samples) / elapsed, 2),
@@ -340,9 +404,27 @@ def main() -> int:
     parser.add_argument("--scoring-mode", default="ICPC", choices=["ICPC", "POINTS"], dest="scoring_mode")
     parser.add_argument("--seed", type=int, default=20261117)
     parser.add_argument("--drain", type=float, default=0.0, help="seconds to wait for the queue to empty")
+    parser.add_argument(
+        "--baseline", type=int, default=30, help="uncontended requests per endpoint before the concurrent run"
+    )
+    parser.add_argument(
+        "--dataset-file",
+        dest="dataset_file",
+        default="",
+        help="reuse (or create) a dataset handle, so a run is repeatable against identical data",
+    )
+    parser.add_argument(
+        "--build-only",
+        dest="build_only",
+        action="store_true",
+        help="build the dataset and stop; lets the dataset be prepared with the judge stopped",
+    )
     args = parser.parse_args()
 
     report = asyncio.run(run(args))
+    if report.get("built_only"):
+        print(f"[workload] dataset built: {json.dumps(report['dataset'])}")
+        return 0
     EVIDENCE.mkdir(parents=True, exist_ok=True)
     path = EVIDENCE / f"workload-{args.label}.json"
     path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
@@ -361,6 +443,14 @@ def main() -> int:
             f"{stats['p99_ms']:8.2f} {stats['max_ms']:8.2f} {stats['requests_per_second']:7.1f} "
             f"{stats['errors']:5d}"
         )
+    if report["baseline_sequential"]:
+        print("-" * 78)
+        print("uncontended baseline (one request at a time)")
+        for endpoint, stats in report["baseline_sequential"].items():
+            print(
+                f"{endpoint:28s} {stats['count']:6d} {stats['p50_ms']:8.2f} {stats['p95_ms']:8.2f} "
+                f"{stats['max_ms']:8.2f}"
+            )
     print("-" * 78)
     judging = report["judging"]
     print(f"attempts created during the run: {judging['attempts_created_during_run']}")

@@ -1,0 +1,460 @@
+{
+  "label": "unit",
+  "labels": {
+    "started_at": "2026-11-17T11:59:58+0000",
+    "commit": "2a046fe",
+    "configured_execution_mode": "docker",
+    "api_base_url": "http://api:8000",
+    "workers_running": true,
+    "markers_selected": "unit",
+    "api_version": {
+      "service": "api",
+      "commit": "2a046fe",
+      "execution_mode": "docker",
+      "lease_seconds": 30,
+      "max_deliveries": 3,
+      "languages": {
+        "python3": "shodh-runner-python:1",
+        "cpp17": "shodh-runner-cpp:1"
+      },
+      "failpoints_armed": []
+    },
+    "data_version": "seed-v1",
+    "programs_version": "programs-v1",
+    "seeded_at": "2026-11-17T11:59:55.002311+00:00"
+  },
+  "totals": {
+    "passed": 47
+  },
+  "results": [
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestIcpc::test_unsolved_cell_scores_nothing",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestIcpc::test_accepted_scores_the_pinned_max_points",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestIcpc::test_penalty_counts_only_rejections_before_the_solve",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestIcpc::test_elapsed_minutes_floor_not_round",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestIcpc::test_arrival_order_does_not_matter",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestIcpc::test_first_accepted_wins_even_if_a_later_one_exists",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestPoints::test_best_score_wins",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestPoints::test_earliest_submission_wins_a_tie",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestPoints::test_no_penalty_in_points_mode",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestRanking::test_more_solved_outranks_lower_penalty",
+      "outcome": "passed",
+      "duration_s": 0.002,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestRanking::test_equal_scores_share_a_rank_and_order_is_total",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestRanking::test_dense_rank_skips_after_a_tie",
+      "outcome": "passed",
+      "duration_s": 0.001,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestRanking::test_points_mode_ranks_on_points",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::test_empty_cell_is_zero_everything",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_state_model.py::test_every_state_is_declared",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_state_model.py::test_terminal_states_have_no_exit",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_state_model.py::test_queue_to_verdict_is_the_happy_path",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_state_model.py::test_work_can_return_to_the_queue_but_not_from_a_verdict",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_state_model.py::test_a_judge_failure_is_not_a_verdict_state",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_state_model.py::test_pending_cannot_jump_straight_to_completed",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_state_model.py::TestSourceFailpointMarker::test_marker_is_read_from_a_comment",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_state_model.py::TestSourceFailpointMarker::test_marker_in_a_c_comment_is_read_too",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_state_model.py::TestSourceFailpointMarker::test_absent_marker_returns_nothing",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_state_model.py::TestSourceFailpointMarker::test_marker_far_down_the_file_is_ignored",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_all_passed_is_accepted_with_full_points",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_compile_failure_short_circuits_everything",
+      "outcome": "passed",
+      "duration_s": 0.001,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_first_failure_by_ordinal_names_the_verdict[WRONG_OUTPUT-WRONG_ANSWER]",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "parametrize",
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_first_failure_by_ordinal_names_the_verdict[RUNTIME_ERROR-RUNTIME_ERROR]",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "parametrize",
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_first_failure_by_ordinal_names_the_verdict[TIMEOUT-TIME_LIMIT_EXCEEDED]",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "parametrize",
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_first_failure_by_ordinal_names_the_verdict[MEMORY_EXCEEDED-MEMORY_LIMIT_EXCEEDED]",
+      "outcome": "passed",
+      "duration_s": 0.002,
+      "markers": [
+        "parametrize",
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_first_failure_by_ordinal_names_the_verdict[OUTPUT_EXCEEDED-OUTPUT_LIMIT_EXCEEDED]",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "parametrize",
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_ordinal_order_not_arrival_order_decides",
+      "outcome": "passed",
+      "duration_s": 0.002,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_partial_credit_is_weighted_and_never_reaches_full_marks",
+      "outcome": "passed",
+      "duration_s": 0.003,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_weights_are_respected",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_empty_suite_is_not_a_free_pass",
+      "outcome": "passed",
+      "duration_s": 0.001,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestComparison::test_trailing_whitespace_mode_ignores_line_and_file_endings",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestComparison::test_trailing_whitespace_mode_still_rejects_different_content",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestComparison::test_exact_mode_is_byte_for_byte",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestClassification::test_clean_match_passes",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestClassification::test_mismatch_is_wrong_output",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestClassification::test_timeout_outranks_a_correct_partial_answer",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestClassification::test_truncated_output_is_an_output_limit",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestClassification::test_sigxfsz_is_an_output_limit",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestClassification::test_nonzero_exit_is_a_runtime_error",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestClassification::test_allocation_failure_is_a_memory_limit",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestClassification::test_peak_rss_near_the_limit_is_a_memory_limit",
+      "outcome": "passed",
+      "duration_s": 0.001,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_verdict_and_compare.py::TestClassification::test_cpu_kill_is_reported_as_a_time_limit_not_a_crash",
+      "outcome": "passed",
+      "duration_s": 0.0,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    }
+  ],
+  "finished_at": "2026-11-17T11:59:59+0000"
+}

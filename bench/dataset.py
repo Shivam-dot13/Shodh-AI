@@ -58,6 +58,14 @@ class Dataset:
             "cells": len(self.participants) * len(self.problems),
         }
 
+    def save(self, path: pathlib.Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(self.__dict__, indent=2) + "\n", encoding="utf-8")
+
+    @classmethod
+    def load(cls, path: pathlib.Path) -> Dataset:
+        return cls(**json.loads(path.read_text(encoding="utf-8")))
+
 
 def _program(role: str = "accepted") -> str:
     return (PROGRAMS / "sum_two_accepted.py").read_text(encoding="utf-8")

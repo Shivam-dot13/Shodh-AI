@@ -1,10 +1,10 @@
 {
   "data_version": "seed-v1",
   "programs_version": "programs-v1",
-  "seeded_at": "2026-11-17T11:57:39.467493+00:00",
-  "window_anchor": "2026-11-17T11:00:00+00:00",
+  "seeded_at": "2026-11-17T12:15:30.539247+00:00",
+  "window_anchor": "2026-11-17T12:00:00+00:00",
   "execution_mode": "docker",
-  "commit": "unknown",
+  "commit": "2a046fe",
   "service_tokens": {
     "judge": "shodh_judge_dev_token",
     "platform_admin": "shodh_platform_admin_dev_token"
@@ -75,8 +75,8 @@
       "scoring_mode": "ICPC",
       "penalty_minutes": 20,
       "max_attempts_per_problem": null,
-      "starts_at": "2026-11-17T10:00:00+00:00",
-      "ends_at": "2026-12-17T11:00:00+00:00",
+      "starts_at": "2026-11-17T11:00:00+00:00",
+      "ends_at": "2026-12-17T12:00:00+00:00",
       "open_now": true,
       "participants": [
         "rohan@acme.test",
@@ -159,8 +159,8 @@
       "scoring_mode": "POINTS",
       "penalty_minutes": 0,
       "max_attempts_per_problem": null,
-      "starts_at": "2026-11-17T10:00:00+00:00",
-      "ends_at": "2026-12-17T11:00:00+00:00",
+      "starts_at": "2026-11-17T11:00:00+00:00",
+      "ends_at": "2026-12-17T12:00:00+00:00",
       "open_now": true,
       "participants": [
         "lin@borealis.test",
@@ -214,8 +214,8 @@
       "scoring_mode": "ICPC",
       "penalty_minutes": 20,
       "max_attempts_per_problem": 2,
-      "starts_at": "2026-11-14T11:00:00+00:00",
-      "ends_at": "2026-11-16T11:00:00+00:00",
+      "starts_at": "2026-11-14T12:00:00+00:00",
+      "ends_at": "2026-11-16T12:00:00+00:00",
       "open_now": false,
       "participants": [
         "rohan@acme.test"

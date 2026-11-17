@@ -1,0 +1,126 @@
+{
+  "generated_at": "2026-11-17T12:03:22+0000",
+  "commit": "2a046fe",
+  "execution_mode": "docker",
+  "configuration": {
+    "lease_seconds": 30,
+    "max_deliveries": 3,
+    "languages": {
+      "python3": "shodh-runner-python:1",
+      "cpp17": "shodh-runner-cpp:1"
+    },
+    "api_workers_env": "unset",
+    "worker_replicas_env": "unset"
+  },
+  "data_version": "seed-v1",
+  "programs_version": "programs-v1",
+  "seeded_at": "2026-11-17T12:03:21.018852+00:00",
+  "test_suites": {
+    "concurrency": {
+      "file": "test-report-concurrency.json",
+      "totals": {
+        "passed": 11
+      },
+      "labels": {
+        "commit": "2a046fe",
+        "configured_execution_mode": "docker",
+        "data_version": "seed-v1",
+        "workers_running": false,
+        "markers_selected": "concurrency"
+      },
+      "failed_tests": []
+    },
+    "functional": {
+      "file": "test-report-functional.json",
+      "totals": {
+        "passed": 63
+      },
+      "labels": {
+        "commit": "2a046fe",
+        "configured_execution_mode": "docker",
+        "data_version": "seed-v1",
+        "workers_running": true,
+        "markers_selected": "integration and not concurrency"
+      },
+      "failed_tests": []
+    },
+    "realrunner": {
+      "file": "test-report-realrunner.json",
+      "totals": {
+        "passed": 19
+      },
+      "labels": {
+        "commit": "2a046fe",
+        "configured_execution_mode": "docker",
+        "data_version": "seed-v1",
+        "workers_running": true,
+        "markers_selected": "realrunner"
+      },
+      "failed_tests": []
+    },
+    "tests": {
+      "file": "test-report-tests.json",
+      "totals": {
+        "passed": 11
+      },
+      "labels": {
+        "commit": "unknown",
+        "configured_execution_mode": "docker",
+        "data_version": "seed-v1",
+        "workers_running": false,
+        "markers_selected": "concurrency"
+      },
+      "failed_tests": []
+    },
+    "unit": {
+      "file": "test-report-unit.json",
+      "totals": {
+        "passed": 47
+      },
+      "labels": {
+        "commit": "2a046fe",
+        "configured_execution_mode": "docker",
+        "data_version": "seed-v1",
+        "workers_running": true,
+        "markers_selected": "unit"
+      },
+      "failed_tests": []
+    }
+  },
+  "workloads": {
+    "smoke": {
+      "file": "workload-smoke.json",
+      "duration_s": 10.07,
+      "concurrency": 8,
+      "dataset": {
+        "label": "smoke",
+        "contest_id": "12b18316-4b36-485a-90c2-236dacda7503",
+        "participants": 10,
+        "problems": 2,
+        "submissions_prefilled": 20,
+        "verdicts_prefilled": 16,
+        "cells": 20
+      },
+      "throughput_rps": 78.15,
+      "errors": 0,
+      "execution_mode": "docker",
+      "queue_delay_p95_ms": 8816.14,
+      "consistency_after_run": {
+        "serving_matches_rebuild": true,
+        "serving_matches_naive": true,
+        "rows": 10
+      },
+      "per_endpoint_p95_ms": {
+        "GET /leaderboard": 172.75,
+        "GET /submissions": 166.03,
+        "GET /submissions/{id}": 147.99,
+        "POST /submissions": 271.36
+      }
+    }
+  },
+  "bottleneck_investigations": {},
+  "demo_logs": [
+    "demo-20261117T113415Z.log",
+    "demo-20261117T120317Z.log"
+  ]
+}

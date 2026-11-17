@@ -1,7 +1,7 @@
 ==============================================================================
 Shodh a Code - end to end walkthrough
 ==============================================================================
-commit            unknown
+commit            2a046fe
 execution mode    docker  (docker = real container isolation)
 data version      seed-v1 / programs-v1
 contest           315a90c5-864f-590a-8e6e-b8a8ecdfd429  scoring=ICPC
@@ -12,20 +12,20 @@ contest           315a90c5-864f-590a-8e6e-b8a8ecdfd429  scoring=ICPC
    dev    join -> 201
 
 -- 2. submissions covering every documented outcome -------------------------
-   rohan  accepted                     python3 -> QUEUED  id=a3ba171b
-   rohan  wrong_output                 python3 -> QUEUED  id=0951c250
-   meera  wrong_output                 python3 -> QUEUED  id=81ee3485
-   meera  accepted                     python3 -> QUEUED  id=36df1e64
-   dev    runtime_failure              python3 -> QUEUED  id=0c346878
-   dev    timeout                      python3 -> QUEUED  id=f3162fca
-   dev    excessive_output             python3 -> QUEUED  id=1fbd25ea
-   dev    compile_error                python3 -> QUEUED  id=a105c507
-   dev    accepted                     cpp17   -> QUEUED  id=5980fe30
-   rohan  runner_failure_controllable  python3 -> QUEUED  id=314a330e
+   rohan  accepted                     python3 -> QUEUED  id=270d5977
+   rohan  wrong_output                 python3 -> QUEUED  id=55b83df5
+   meera  wrong_output                 python3 -> QUEUED  id=01ac96b4
+   meera  accepted                     python3 -> QUEUED  id=7a4baaeb
+   dev    runtime_failure              python3 -> QUEUED  id=e9e8b2c1
+   dev    timeout                      python3 -> QUEUED  id=92f89a8e
+   dev    excessive_output             python3 -> QUEUED  id=f9ea389b
+   dev    compile_error                python3 -> QUEUED  id=d183d8b9
+   dev    accepted                     cpp17   -> QUEUED  id=d5f3521d
+   rohan  runner_failure_controllable  python3 -> QUEUED  id=9d57e2be
 
 -- 3. idempotency -----------------------------------------------------------
-   first use            -> 201 id=23966e6f
-   same key, same code  -> 200 id=23966e6f replayed=True
+   first use            -> 201 id=57134206
+   same key, same code  -> 200 id=57134206 replayed=True
    same key, other code -> 409 idempotency_key_conflict
 
 -- 4. waiting for real verdicts ---------------------------------------------
@@ -43,9 +43,9 @@ contest           315a90c5-864f-590a-8e6e-b8a8ecdfd429  scoring=ICPC
 
 -- 5. leaderboard (serving path) --------------------------------------------
    standings_version=10 execution_mode=docker
-   #1 Rohan Kumar    solved=1 points= 100 penalty=  93
-   #2 Meera Iyer     solved=1 points= 100 penalty= 113
-   #3 Dev Patel      solved=1 points= 100 penalty= 173
+   #1 Rohan Kumar    solved=1 points= 100 penalty=  63
+   #2 Meera Iyer     solved=1 points= 100 penalty=  83
+   #3 Dev Patel      solved=1 points= 100 penalty= 143
 
 -- 6. rejudge against an explicitly chosen version pair ---------------------
    rejudge -> 202 attempt_no=2

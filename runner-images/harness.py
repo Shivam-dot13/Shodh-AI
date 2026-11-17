@@ -99,7 +99,9 @@ def _compile(language: str, time_budget_s: float) -> dict:
     except subprocess.TimeoutExpired:
         return {"ok": False, "message": "compilation timed out", "time_ms": int(time_budget_s * 1000)}
     except FileNotFoundError as exc:
-        return {"ok": False, "message": f"compiler missing: {exc}", "time_ms": 0}
+        # The toolchain is missing from this runner. That is our problem, not the author's, so
+        # it must surface as an infrastructure failure and never as a compile error.
+        return {"ok": False, "missing_toolchain": True, "message": str(exc), "time_ms": 0}
     return {
         "ok": done.returncode == 0,
         "message": (done.stderr or done.stdout or "")[-4000:],
@@ -242,6 +244,9 @@ def main() -> int:
         "nproc": int(manifest.get("nproc", 64)),
     }
     compile_result = _compile(language, min(20.0, 10.0 + limits["time_limit_ms"] / 1000))
+    if compile_result.get("missing_toolchain"):
+        _emit({"harness_error": f"no toolchain for {language} in this runner: {compile_result['message']}"})
+        return 20
     if not compile_result["ok"]:
         _emit({"compile": compile_result, "tests": []})
         return 0

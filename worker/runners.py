@@ -10,7 +10,10 @@ docker  One sibling container per attempt, created through the daemon socket the
 
 local   The same harness, same limits, run as a subprocess of the worker. There is no
         container boundary: it exists so concurrency and recovery tests can run fast and
-        deterministically, and every result it produces is labelled local.
+        deterministically, and every result it produces is labelled local. Only python3 is
+        available in this mode - the worker image carries no C++ toolchain - and a language
+        whose toolchain is missing is reported as an infrastructure failure, never as a
+        compile error against the author.
 
 Isolation limits worth stating plainly: this is Docker, not a microVM. A kernel escape, a
 side channel between containers on the same host, or clock and /proc visibility are not
@@ -173,7 +176,7 @@ class LocalRunner:
                 env=dict(os.environ, SHODH_BOX=box),
                 cwd=box,
             )
-            if done.returncode not in (0, 17, 18, 19) and SENTINEL not in done.stdout:
+            if done.returncode not in (0, 17, 18, 19, 20) and SENTINEL not in done.stdout:
                 raise RunnerUnavailable(f"harness exited {done.returncode}: {done.stderr[-400:]}")
             result = _parse_result(done.stdout)
             return _outcome_from_result(

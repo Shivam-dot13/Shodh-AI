@@ -91,12 +91,18 @@ def main() -> int:
         f"x {args.prefill} judged submissions",
         flush=True,
     )
-    data = dataset_builder.build(
-        participants=args.participants,
-        problems=args.problems,
-        submissions_per_cell=args.prefill,
-        label=f"bottleneck-{args.label}",
-    )
+    handle = pathlib.Path(f"/srv/evidence/.dataset-bottleneck-{args.label}.json")
+    if handle.exists():
+        data = dataset_builder.Dataset.load(handle)
+        print(f"[bottleneck] reusing dataset {handle}", flush=True)
+    else:
+        data = dataset_builder.build(
+            participants=args.participants,
+            problems=args.problems,
+            submissions_per_cell=args.prefill,
+            label=f"bottleneck-{args.label}",
+        )
+        data.save(handle)
     print(f"[bottleneck] dataset ready: {json.dumps(data.summary())}", flush=True)
 
     organizer = dataset_builder.client(data.organizer_token, timeout=180.0)

@@ -86,9 +86,14 @@ def _lock_cell(
 
 
 def recompute_cell(
-    session: Session, contest: Contest, user_id: uuid.UUID, problem_id: uuid.UUID
+    session: Session, contest: Contest, user_id: uuid.UUID, problem_id: uuid.UUID, *, bump: bool = True
 ) -> CellResult:
-    """Recompute and persist one standings cell. Caller owns the transaction."""
+    """Recompute and persist one standings cell. Caller owns the transaction.
+
+    `bump=False` is for a bulk rebuild, which bumps the contest counter once at the end. Lock
+    order matters here: a verdict transaction takes one cell row and then the contest row, so a
+    rebuild must not interleave contest-row updates between cell locks or the two can deadlock.
+    """
     cell_row = _lock_cell(session, contest.id, user_id, problem_id)
     rows = judged_rows_for_cell(session, contest.id, user_id, problem_id)
     result = score_cell(
@@ -106,7 +111,8 @@ def recompute_cell(
     cell_row.submission_id = result.submission_id
     cell_row.last_progress_at = result.last_progress_at
     session.flush()
-    bump_standings_version(session, contest.id)
+    if bump:
+        bump_standings_version(session, contest.id)
     log.info(
         "standings cell recomputed",
         extra={
@@ -134,8 +140,9 @@ def bump_standings_version(session: Session, contest_id: uuid.UUID) -> int:
 def rebuild_all_cells(session: Session, contest: Contest) -> int:
     """Recompute every cell of a contest from authoritative records.
 
-    Used by the organizer-facing consistency check and after a bulk rejudge. Returns the number
-    of cells written.
+    Used by the organizer-facing repair path and after a bulk rejudge. Cells are locked in a
+    stable order and the contest counter is bumped once at the end, so a rebuild running while
+    verdicts are being stored cannot deadlock with them. Returns the number of cells written.
     """
     pairs = session.execute(
         text(
@@ -143,10 +150,13 @@ def rebuild_all_cells(session: Session, contest: Contest) -> int:
             SELECT DISTINCT s.user_id, s.problem_id
             FROM submissions s
             WHERE s.contest_id = :contest_id
+            ORDER BY s.user_id, s.problem_id
             """
         ),
         {"contest_id": contest.id},
     ).all()
     for user_id, problem_id in pairs:
-        recompute_cell(session, contest, user_id, problem_id)
+        recompute_cell(session, contest, user_id, problem_id, bump=False)
+    if pairs:
+        bump_standings_version(session, contest.id)
     return len(pairs)

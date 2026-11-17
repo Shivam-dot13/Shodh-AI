@@ -32,6 +32,7 @@ PREFILL="${PREFILL:-3}"
 SUBMIT_SHARE="${SUBMIT_SHARE:-0.3}"
 BOTTLENECK_PARTICIPANTS="${BOTTLENECK_PARTICIPANTS:-400}"
 BOTTLENECK_PROBLEMS="${BOTTLENECK_PROBLEMS:-6}"
+BOTTLENECK_PREFILL="${BOTTLENECK_PREFILL:-1}"
 
 say() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 
@@ -40,26 +41,40 @@ $COMPOSE --profile tools build
 $COMPOSE up -d
 bash scripts/wait-for-api.sh "http://localhost:${API_PORT:-8000}" 120
 
-say "run 1/3  api-only: judge workers stopped, nothing is executed"
+# The datasets are built with the judge stopped and then reused, for two reasons: the history
+# is written by one synthetic judge instead of racing the real one, and both measured runs then
+# execute against byte-identical data.
+say "preparing datasets (judge stopped so the history is written deterministically)"
 $COMPOSE stop worker
-$COMPOSE run --rm bench \
-  --label api-only \
-  --duration "$DURATION" --concurrency "$CONCURRENCY" \
-  --participants "$PARTICIPANTS" --problems "$PROBLEMS" --prefill "$PREFILL" \
-  --submit-share "$SUBMIT_SHARE"
+rm -f evidence/.dataset-end-to-end.json evidence/.dataset-api-only.json
+for LABEL in end-to-end api-only; do
+  $COMPOSE run --rm bench \
+    --label "$LABEL" --build-only --dataset-file "/srv/evidence/.dataset-$LABEL.json" \
+    --participants "$PARTICIPANTS" --problems "$PROBLEMS" --prefill "$PREFILL"
+done
 
-say "run 2/3  end-to-end: judge workers running, real containers"
+say "run 1/3  end-to-end: judge workers running, real containers, empty queue"
 $COMPOSE start worker
 bash scripts/wait-for-api.sh "http://localhost:${API_PORT:-8000}" 60 >/dev/null
 $COMPOSE run --rm bench \
-  --label end-to-end \
+  --label end-to-end --dataset-file /srv/evidence/.dataset-end-to-end.json \
   --duration "$DURATION" --concurrency "$CONCURRENCY" \
-  --participants "$PARTICIPANTS" --problems "$PROBLEMS" --prefill "$PREFILL" \
-  --submit-share "$SUBMIT_SHARE" --drain 180
+  --submit-share "$SUBMIT_SHARE" --drain 240
 
+say "run 2/3  api-only: judge workers stopped, nothing is executed"
+$COMPOSE stop worker
+$COMPOSE run --rm bench \
+  --label api-only --dataset-file /srv/evidence/.dataset-api-only.json \
+  --duration "$DURATION" --concurrency "$CONCURRENCY" \
+  --submit-share "$SUBMIT_SHARE"
+
+# Still with the judge stopped: this run measures two read paths, so sandbox start-ups on the
+# same host would only add noise to the comparison.
 say "run 3/3  leaderboard bottleneck, before and after, with query plans"
 $COMPOSE run --rm --entrypoint python bench -m bench.bottleneck \
-  --participants "$BOTTLENECK_PARTICIPANTS" --problems "$BOTTLENECK_PROBLEMS" --prefill "$PREFILL"
+  --participants "$BOTTLENECK_PARTICIPANTS" --problems "$BOTTLENECK_PROBLEMS" \
+  --prefill "$BOTTLENECK_PREFILL"
+$COMPOSE start worker
 
 say "done"
 echo "results are in ./evidence"

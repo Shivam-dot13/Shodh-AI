@@ -1,0 +1,4349 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Shodh a Code - contest platform backend",
+    "description": "\nBackend for **Shodh a Code**, a coding contest platform with an asynchronous judge.\n\nAuthentication\n    Bearer tokens. The seed prints one per identity (see `evidence/seed-manifest.json` or the\n    output of `make seed`). `POST /auth/dev/token` mints a token for any identity; it is a\n    development fixture and is refused when `DEV_AUTH_ENABLED=false`.\n\nThree credential scopes\n    `user` participants and organizers, pinned to one organization\n    `judge` the worker plane under `/internal/judge/*`\n    `platform_admin` bootstrap of organizations and identities\n\nError shape\n    Every failure is `{\"error\": {\"type\", \"code\", \"message\", \"details\", \"request_id\"}}`, where\n    `type` is one of `validation` (422), `business_rule` (409), `authentication` (401),\n    `authorization` (403), `not_found` (404) or `infrastructure` (503). A cross-tenant read is\n    a 404 by design: knowing an identifier must not confirm that it exists.\n\nCorrelation\n    Send `X-Request-Id` and it is echoed, stored on the submission, carried into the worker and\n    printed in every structured log line for the operation.\n",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/healthz": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Liveness: the process is up",
+        "operationId": "healthz_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Healthz Healthz Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/readyz": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Readiness: the database answers",
+        "operationId": "readyz_readyz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Readyz Readyz Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/version": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Build and runtime labels that every result is tagged with",
+        "operationId": "version_version_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Version Version Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ops/queue": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Judge queue depth by state (organizer)",
+        "operationId": "queue_ops_queue_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Queue Ops Queue Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/failpoints": {
+      "post": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Arm or disarm a failpoint (development builds only)",
+        "description": "Deterministic fault injection for the recovery scenarios.\n\nRefused unless the development authentication fixture is enabled, so a production build\ncannot be told to break itself. The switch is stored in the database, so it reaches every\nAPI process within one refresh interval rather than only the one that served this request.",
+        "operationId": "set_failpoint_dev_failpoints_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FailpointIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Set Failpoint Dev Failpoints Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/me": {
+      "get": {
+        "tags": [
+          "identities"
+        ],
+        "summary": "Who this credential is",
+        "operationId": "me_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/dev/token": {
+      "post": {
+        "tags": [
+          "identities"
+        ],
+        "summary": "Mint a bearer token for a seeded or newly created identity (development fixture)",
+        "operationId": "dev_token_auth_dev_token_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orgs": {
+      "post": {
+        "tags": [
+          "identities"
+        ],
+        "summary": "Create an organization (platform admin)",
+        "operationId": "create_org_orgs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrganizationIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orgs/{org_id}": {
+      "get": {
+        "tags": [
+          "identities"
+        ],
+        "summary": "Read one organization",
+        "description": "A user credential may read only its own organization; anything else is a 404.",
+        "operationId": "get_org_orgs__org_id__get",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrganizationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orgs/{org_id}/users": {
+      "post": {
+        "tags": [
+          "identities"
+        ],
+        "summary": "Create an identity in an organization (platform admin, or an organizer of that org)",
+        "operationId": "create_user_orgs__org_id__users_post",
+        "parameters": [
+          {
+            "name": "org_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Org Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserWithTokenOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contests": {
+      "get": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "List contests of the caller organization",
+        "description": "Ordered by starts_at descending, then id, so paging is stable under concurrent writes.",
+        "operationId": "list_contests_contests_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageEnvelope_ContestOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "Create a contest (organizer)",
+        "operationId": "create_contest_contests_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContestIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contests/{contest_id}": {
+      "get": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "Read one contest",
+        "operationId": "get_contest_contests__contest_id__get",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contest Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "Amend a contest (organizer)",
+        "operationId": "patch_contest_contests__contest_id__patch",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contest Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContestPatch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contests/{contest_id}/participants/me": {
+      "post": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "Join a contest (participant). Idempotent.",
+        "operationId": "join_contest_contests__contest_id__participants_me_post",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contest Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParticipantOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contests/{contest_id}/participants": {
+      "get": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "List participants (organizer)",
+        "operationId": "list_participants_contests__contest_id__participants_get",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contest Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageEnvelope_ParticipantOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contests/{contest_id}/problems": {
+      "post": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "Add a problem with its first version and test suite (organizer)",
+        "operationId": "create_problem_contests__contest_id__problems_post",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contest Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProblemIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "List problems of a contest, ordered by ordinal then id",
+        "operationId": "list_problems_contests__contest_id__problems_get",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contest Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageEnvelope_ProblemOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/problems/{problem_id}": {
+      "get": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "Read a problem. Participants get the statement and sample tests only.",
+        "operationId": "get_problem_problems__problem_id__get",
+        "parameters": [
+          {
+            "name": "problem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Problem Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetailOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/problems/{problem_id}/versions": {
+      "post": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "Publish a new problem version (organizer). Historical verdicts are untouched.",
+        "operationId": "create_problem_version_problems__problem_id__versions_post",
+        "parameters": [
+          {
+            "name": "problem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Problem Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProblemVersionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemVersionDetail"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "List problem versions (organizer)",
+        "operationId": "list_problem_versions_problems__problem_id__versions_get",
+        "parameters": [
+          {
+            "name": "problem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Problem Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageEnvelope_ProblemVersionOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/problems/{problem_id}/test-suites": {
+      "post": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "Add a test suite version (organizer). Hidden data is never returned.",
+        "operationId": "create_test_suite_problems__problem_id__test_suites_post",
+        "parameters": [
+          {
+            "name": "problem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Problem Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TestSuiteIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestSuiteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "List test suite versions and their sizes (organizer). Case contents stay hidden.",
+        "operationId": "list_test_suites_problems__problem_id__test_suites_get",
+        "parameters": [
+          {
+            "name": "problem_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Problem Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageEnvelope_TestSuiteOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contests/{contest_id}/stats": {
+      "get": {
+        "tags": [
+          "contests"
+        ],
+        "summary": "Contest counters an organizer can sanity-check against the leaderboard",
+        "operationId": "contest_stats_contests__contest_id__stats_get",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contest Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Contest Stats Contests  Contest Id  Stats Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contests/{contest_id}/submissions": {
+      "post": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Submit a program (participant). Idempotent on Idempotency-Key.",
+        "description": "Idempotency\n\nThe key may be sent as the `Idempotency-Key` header or as `idempotency_key` in the body; if\nboth are present they must agree. The key is scoped to (contest, actor), so two participants\ncan use the same key safely and a key cannot be replayed into another contest.\n\nA replay returns 200 with the original submission. Reusing the key with different code, a\ndifferent problem or a different language returns 409.",
+        "operationId": "create_submission_contests__contest_id__submissions_post",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contest Id"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          },
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmissionIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionOut"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Replay: this key already created a submission"
+          },
+          "409": {
+            "description": "Key reused with different code or parameters, or a contest rule rejected it"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "List submissions. Participants see only their own; organizers see all.",
+        "description": "Ordered by submitted_at descending then id descending, which is a total order.",
+        "operationId": "list_submissions_contests__contest_id__submissions_get",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contest Id"
+            }
+          },
+          {
+            "name": "user_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User Id"
+            }
+          },
+          {
+            "name": "problem_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Problem Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SubmissionStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000000,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageEnvelope_SubmissionOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submissions/{submission_id}": {
+      "get": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Read one submission with its attempt history and per-test outcomes",
+        "description": "Per-test rows carry status and resource usage only: never the hidden input, the expected\noutput or the program output.",
+        "operationId": "get_submission_submissions__submission_id__get",
+        "parameters": [
+          {
+            "name": "submission_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Submission Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionDetailOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submissions/{submission_id}/attempts": {
+      "get": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Judge-level attempt detail (organizer): runtime config, worker, lease epoch, failures",
+        "operationId": "list_attempts_submissions__submission_id__attempts_get",
+        "parameters": [
+          {
+            "name": "submission_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Submission Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageEnvelope_AttemptOrganizerOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/submissions/{submission_id}/rejudge": {
+      "post": {
+        "tags": [
+          "submissions"
+        ],
+        "summary": "Rejudge against an explicitly chosen problem version and test suite (organizer)",
+        "description": "The chosen pair must belong to the submission problem. Earlier attempts are preserved and\nremain readable; the new attempt becomes authoritative only once it completes.",
+        "operationId": "rejudge_submissions__submission_id__rejudge_post",
+        "parameters": [
+          {
+            "name": "submission_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Submission Id"
+            }
+          },
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Request-Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejudgeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptOrganizerOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contests/{contest_id}/leaderboard": {
+      "get": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "Standings, with a selectable computation path",
+        "description": "How clients observe updates\n\nThe response carries `standings_version`, a counter bumped inside the transaction that\nstores a verdict, and an `ETag` of that counter. A client polls and compares; a 304 means\nnothing has changed. There is no asynchronous refresh anywhere in the write path, so a\nsuccessful read is never behind a verdict that has already been stored.\n\n`source` selects the computation path and exists for evidence, not for tuning:\n  standings  the maintained problem_scores cells (what everyone gets by default)\n  naive      recompute from submissions and attempts on every request (pre-optimization)\n  rebuild    full recompute in Python from authoritative records\nAll three must return the same ranking; /standings/verify asserts it.",
+        "operationId": "leaderboard_contests__contest_id__leaderboard_get",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contest Id"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "standings (default) | naive | rebuild",
+              "default": "",
+              "title": "Source"
+            },
+            "description": "standings (default) | naive | rebuild"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100000,
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          },
+          {
+            "name": "If-None-Match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-None-Match"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaderboardOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contests/{contest_id}/standings/verify": {
+      "get": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "Assert that the serving path, the naive path and a full rebuild agree (organizer)",
+        "operationId": "verify_standings_contests__contest_id__standings_verify_get",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contest Id"
+            }
+          },
+          {
+            "name": "include_rows",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Include Rows"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Verify Standings Contests  Contest Id  Standings Verify Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contests/{contest_id}/standings/rebuild": {
+      "post": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "Recompute every standings cell from authoritative records (organizer)",
+        "description": "Used after a bulk rejudge, and as the repair path if a cell were ever suspected wrong.\nWriting it back must be a no-op on a healthy contest, which `verify` checks.",
+        "operationId": "rebuild_standings_contests__contest_id__standings_rebuild_post",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contest Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Rebuild Standings Contests  Contest Id  Standings Rebuild Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contests/{contest_id}/standings/explain": {
+      "get": {
+        "tags": [
+          "leaderboard"
+        ],
+        "summary": "EXPLAIN (ANALYZE, BUFFERS) for a leaderboard path (organizer)",
+        "operationId": "explain_standings_contests__contest_id__standings_explain_get",
+        "parameters": [
+          {
+            "name": "contest_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Contest Id"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "standings | naive",
+              "default": "standings",
+              "title": "Source"
+            },
+            "description": "standings | naive"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Explain Standings Contests  Contest Id  Standings Explain Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/judge/leases": {
+      "post": {
+        "tags": [
+          "judge plane"
+        ],
+        "summary": "Claim work (judge scope)",
+        "description": "Claims up to `capacity` jobs with SELECT ... FOR UPDATE SKIP LOCKED.\n\nTwo workers calling this at the same instant cannot receive the same job: the row lock is\nheld in the database, not in any process. Each lease carries a `lease_epoch` that must be\npresented with the result; the epoch is bumped on every lease and on every reclaim, so a\nstale worker is fenced out.",
+        "operationId": "claim_internal_judge_leases_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LeaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LeaseEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/judge/attempts/{attempt_id}/payload": {
+      "get": {
+        "tags": [
+          "judge plane"
+        ],
+        "summary": "Re-read the judging payload for a held lease (judge scope)",
+        "description": "Lets a worker that restarted mid-job recover its input without a new delivery.",
+        "operationId": "payload_internal_judge_attempts__attempt_id__payload_get",
+        "parameters": [
+          {
+            "name": "attempt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attempt Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Payload Internal Judge Attempts  Attempt Id  Payload Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/judge/attempts/{attempt_id}/heartbeat": {
+      "post": {
+        "tags": [
+          "judge plane"
+        ],
+        "summary": "Extend a lease (judge scope)",
+        "operationId": "heartbeat_internal_judge_attempts__attempt_id__heartbeat_post",
+        "parameters": [
+          {
+            "name": "attempt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attempt Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HeartbeatIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Heartbeat Internal Judge Attempts  Attempt Id  Heartbeat Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/judge/attempts/{attempt_id}/result": {
+      "post": {
+        "tags": [
+          "judge plane"
+        ],
+        "summary": "Report a judging result (judge scope). Idempotent at a fixed lease epoch.",
+        "description": "What this call does, in one transaction\n\nstores the per-test outcomes, derives the verdict, moves the attempt to COMPLETED, retires\nthe queue row, re-derives the submission status, and recomputes the one standings cell the\nverdict can affect. Either all of that is visible or none of it is.\n\nReplaying the same call with the same `lease_epoch` after a lost acknowledgement returns the\nstored attempt and changes nothing.",
+        "operationId": "result_internal_judge_attempts__attempt_id__result_post",
+        "parameters": [
+          {
+            "name": "attempt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attempt Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResultIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AttemptOrganizerOut"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Stale lease epoch, or the attempt is already finished"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/judge/attempts/{attempt_id}/infra-failure": {
+      "post": {
+        "tags": [
+          "judge plane"
+        ],
+        "summary": "Report that the judge could not judge (judge scope)",
+        "description": "Requeues within the delivery budget, otherwise marks the attempt INFRA_FAILED.\n\nNeither path writes a verdict or touches a score: a runner crash or an unavailable service\nis never a student error.",
+        "operationId": "infra_failure_internal_judge_attempts__attempt_id__infra_failure_post",
+        "parameters": [
+          {
+            "name": "attempt_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Attempt Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InfraFailureIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Infra Failure Internal Judge Attempts  Attempt Id  Infra Failure Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/internal/judge/reap": {
+      "post": {
+        "tags": [
+          "judge plane"
+        ],
+        "summary": "Reclaim expired leases now (judge scope)",
+        "description": "The API also does this on a timer; this route makes it deterministic in tests.",
+        "operationId": "reap_internal_judge_reap_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "title": "Response Reap Internal Judge Reap Post"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AttemptKind": {
+        "type": "string",
+        "enum": [
+          "INITIAL",
+          "REJUDGE"
+        ],
+        "title": "AttemptKind"
+      },
+      "AttemptOrganizerOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "attempt_no": {
+            "type": "integer",
+            "title": "Attempt No"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AttemptKind"
+          },
+          "state": {
+            "$ref": "#/components/schemas/AttemptState"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Verdict"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          },
+          "max_score": {
+            "type": "integer",
+            "title": "Max Score"
+          },
+          "tests_passed": {
+            "type": "integer",
+            "title": "Tests Passed"
+          },
+          "tests_total": {
+            "type": "integer",
+            "title": "Tests Total"
+          },
+          "time_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Ms"
+          },
+          "memory_kb": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory Kb"
+          },
+          "exec_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exec Mode"
+          },
+          "compile_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compile Message"
+          },
+          "problem_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Problem Version Id"
+          },
+          "test_suite_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Test Suite Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "runtime_config": {
+            "type": "object",
+            "title": "Runtime Config"
+          },
+          "runner_image": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Image"
+          },
+          "worker_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Worker Id"
+          },
+          "lease_epoch": {
+            "type": "integer",
+            "title": "Lease Epoch"
+          },
+          "failure_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Failure Reason"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "attempt_no",
+          "kind",
+          "state",
+          "verdict",
+          "score",
+          "max_score",
+          "tests_passed",
+          "tests_total",
+          "time_ms",
+          "memory_kb",
+          "exec_mode",
+          "compile_message",
+          "problem_version_id",
+          "test_suite_id",
+          "created_at",
+          "started_at",
+          "finished_at",
+          "runtime_config",
+          "runner_image",
+          "worker_id",
+          "lease_epoch",
+          "failure_reason",
+          "request_id"
+        ],
+        "title": "AttemptOrganizerOut"
+      },
+      "AttemptOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "attempt_no": {
+            "type": "integer",
+            "title": "Attempt No"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AttemptKind"
+          },
+          "state": {
+            "$ref": "#/components/schemas/AttemptState"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Verdict"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "score": {
+            "type": "integer",
+            "title": "Score"
+          },
+          "max_score": {
+            "type": "integer",
+            "title": "Max Score"
+          },
+          "tests_passed": {
+            "type": "integer",
+            "title": "Tests Passed"
+          },
+          "tests_total": {
+            "type": "integer",
+            "title": "Tests Total"
+          },
+          "time_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Ms"
+          },
+          "memory_kb": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory Kb"
+          },
+          "exec_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exec Mode"
+          },
+          "compile_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Compile Message"
+          },
+          "problem_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Problem Version Id"
+          },
+          "test_suite_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Test Suite Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "attempt_no",
+          "kind",
+          "state",
+          "verdict",
+          "score",
+          "max_score",
+          "tests_passed",
+          "tests_total",
+          "time_ms",
+          "memory_kb",
+          "exec_mode",
+          "problem_version_id",
+          "test_suite_id",
+          "created_at",
+          "started_at",
+          "finished_at"
+        ],
+        "title": "AttemptOut"
+      },
+      "AttemptState": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "DISPATCHED",
+          "RUNNING",
+          "COMPLETED",
+          "INFRA_FAILED",
+          "CANCELLED"
+        ],
+        "title": "AttemptState"
+      },
+      "CellOut": {
+        "properties": {
+          "problem_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Problem Id"
+          },
+          "points": {
+            "type": "integer",
+            "title": "Points"
+          },
+          "solved": {
+            "type": "boolean",
+            "title": "Solved"
+          },
+          "penalty_minutes": {
+            "type": "integer",
+            "title": "Penalty Minutes"
+          },
+          "rejected_before_solve": {
+            "type": "integer",
+            "title": "Rejected Before Solve"
+          },
+          "solved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Solved At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "problem_id",
+          "points",
+          "solved",
+          "penalty_minutes",
+          "rejected_before_solve",
+          "solved_at"
+        ],
+        "title": "CellOut"
+      },
+      "CompareMode": {
+        "type": "string",
+        "enum": [
+          "EXACT",
+          "TRIM_TRAILING_WS"
+        ],
+        "title": "CompareMode"
+      },
+      "CompileReportIn": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 8192,
+            "title": "Message",
+            "default": ""
+          },
+          "time_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Ms"
+          }
+        },
+        "type": "object",
+        "title": "CompileReportIn"
+      },
+      "ContestIn": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 2,
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "title": "Slug"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Title"
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Starts At"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ends At"
+          },
+          "scoring_mode": {
+            "$ref": "#/components/schemas/ScoringMode",
+            "default": "ICPC"
+          },
+          "penalty_minutes": {
+            "type": "integer",
+            "maximum": 600.0,
+            "minimum": 0.0,
+            "title": "Penalty Minutes",
+            "default": 20
+          },
+          "max_attempts_per_problem": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Attempts Per Problem"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "title",
+          "starts_at",
+          "ends_at"
+        ],
+        "title": "ContestIn"
+      },
+      "ContestOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "org_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Org Id"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "starts_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Starts At"
+          },
+          "ends_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ends At"
+          },
+          "scoring_mode": {
+            "$ref": "#/components/schemas/ScoringMode"
+          },
+          "penalty_minutes": {
+            "type": "integer",
+            "title": "Penalty Minutes"
+          },
+          "max_attempts_per_problem": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Attempts Per Problem"
+          },
+          "standings_version": {
+            "type": "integer",
+            "title": "Standings Version"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "slug",
+          "title",
+          "starts_at",
+          "ends_at",
+          "scoring_mode",
+          "penalty_minutes",
+          "max_attempts_per_problem",
+          "standings_version"
+        ],
+        "title": "ContestOut"
+      },
+      "ContestPatch": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "starts_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts At"
+          },
+          "ends_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends At"
+          },
+          "penalty_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 600.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Penalty Minutes"
+          },
+          "max_attempts_per_problem": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Attempts Per Problem"
+          }
+        },
+        "type": "object",
+        "title": "ContestPatch"
+      },
+      "FailpointIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "FailpointIn"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HeartbeatIn": {
+        "properties": {
+          "lease_epoch": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Lease Epoch"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lease_epoch"
+        ],
+        "title": "HeartbeatIn"
+      },
+      "InfraFailureIn": {
+        "properties": {
+          "lease_epoch": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Lease Epoch"
+          },
+          "worker_id": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Worker Id"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 1,
+            "title": "Reason"
+          },
+          "retryable": {
+            "type": "boolean",
+            "title": "Retryable",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "lease_epoch",
+          "worker_id",
+          "reason"
+        ],
+        "title": "InfraFailureIn"
+      },
+      "Language": {
+        "type": "string",
+        "enum": [
+          "python3",
+          "cpp17"
+        ],
+        "title": "Language"
+      },
+      "LeaderboardOut": {
+        "properties": {
+          "contest_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Contest Id"
+          },
+          "scoring_mode": {
+            "$ref": "#/components/schemas/ScoringMode"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "standings_version": {
+            "type": "integer",
+            "title": "Standings Version"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "execution_mode": {
+            "type": "string",
+            "title": "Execution Mode"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StandingOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "$ref": "#/components/schemas/Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "contest_id",
+          "scoring_mode",
+          "source",
+          "standings_version",
+          "generated_at",
+          "execution_mode",
+          "items",
+          "page"
+        ],
+        "title": "LeaderboardOut"
+      },
+      "LeaseEnvelope": {
+        "properties": {
+          "leases": {
+            "items": {
+              "$ref": "#/components/schemas/LeaseOut"
+            },
+            "type": "array",
+            "title": "Leases"
+          },
+          "lease_seconds": {
+            "type": "integer",
+            "title": "Lease Seconds"
+          }
+        },
+        "type": "object",
+        "required": [
+          "leases",
+          "lease_seconds"
+        ],
+        "title": "LeaseEnvelope"
+      },
+      "LeaseOut": {
+        "properties": {
+          "attempt_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Attempt Id"
+          },
+          "lease_epoch": {
+            "type": "integer",
+            "title": "Lease Epoch"
+          },
+          "lease_expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Lease Expires At"
+          },
+          "delivery_count": {
+            "type": "integer",
+            "title": "Delivery Count"
+          },
+          "payload": {
+            "type": "object",
+            "title": "Payload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "attempt_id",
+          "lease_epoch",
+          "lease_expires_at",
+          "delivery_count",
+          "payload"
+        ],
+        "title": "LeaseOut"
+      },
+      "LeaseRequest": {
+        "properties": {
+          "worker_id": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Worker Id"
+          },
+          "capacity": {
+            "type": "integer",
+            "maximum": 16.0,
+            "minimum": 1.0,
+            "title": "Capacity",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "worker_id"
+        ],
+        "title": "LeaseRequest"
+      },
+      "MeOut": {
+        "properties": {
+          "scope": {
+            "type": "string",
+            "title": "Scope"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "user": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "scope",
+          "label"
+        ],
+        "title": "MeOut"
+      },
+      "OrganizationIn": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 2,
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "name"
+        ],
+        "title": "OrganizationIn"
+      },
+      "OrganizationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "slug",
+          "name",
+          "created_at"
+        ],
+        "title": "OrganizationOut"
+      },
+      "Page": {
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "returned": {
+            "type": "integer",
+            "title": "Returned"
+          }
+        },
+        "type": "object",
+        "required": [
+          "limit",
+          "offset",
+          "total",
+          "returned"
+        ],
+        "title": "Page"
+      },
+      "PageEnvelope_AttemptOrganizerOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AttemptOrganizerOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "$ref": "#/components/schemas/Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page"
+        ],
+        "title": "PageEnvelope[AttemptOrganizerOut]"
+      },
+      "PageEnvelope_ContestOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ContestOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "$ref": "#/components/schemas/Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page"
+        ],
+        "title": "PageEnvelope[ContestOut]"
+      },
+      "PageEnvelope_ParticipantOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ParticipantOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "$ref": "#/components/schemas/Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page"
+        ],
+        "title": "PageEnvelope[ParticipantOut]"
+      },
+      "PageEnvelope_ProblemOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProblemOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "$ref": "#/components/schemas/Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page"
+        ],
+        "title": "PageEnvelope[ProblemOut]"
+      },
+      "PageEnvelope_ProblemVersionOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ProblemVersionOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "$ref": "#/components/schemas/Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page"
+        ],
+        "title": "PageEnvelope[ProblemVersionOut]"
+      },
+      "PageEnvelope_SubmissionOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SubmissionOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "$ref": "#/components/schemas/Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page"
+        ],
+        "title": "PageEnvelope[SubmissionOut]"
+      },
+      "PageEnvelope_TestSuiteOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TestSuiteOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "$ref": "#/components/schemas/Page"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page"
+        ],
+        "title": "PageEnvelope[TestSuiteOut]"
+      },
+      "ParticipantOut": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "joined_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Joined At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id",
+          "display_name",
+          "email",
+          "joined_at"
+        ],
+        "title": "ParticipantOut"
+      },
+      "ProblemDetailOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "contest_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Contest Id"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "ordinal": {
+            "type": "integer",
+            "title": "Ordinal"
+          },
+          "current_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Version Id"
+          },
+          "current_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProblemVersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "statement": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Statement"
+          },
+          "sample_tests": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Sample Tests"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "contest_id",
+          "slug",
+          "title",
+          "ordinal",
+          "current_version_id"
+        ],
+        "title": "ProblemDetailOut"
+      },
+      "ProblemIn": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9-]*$",
+            "title": "Slug"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "ordinal": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Ordinal",
+            "default": 1
+          },
+          "version": {
+            "$ref": "#/components/schemas/ProblemVersionIn"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "title",
+          "version"
+        ],
+        "title": "ProblemIn"
+      },
+      "ProblemOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "contest_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Contest Id"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "ordinal": {
+            "type": "integer",
+            "title": "Ordinal"
+          },
+          "current_version_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Version Id"
+          },
+          "current_version": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProblemVersionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "contest_id",
+          "slug",
+          "title",
+          "ordinal",
+          "current_version_id"
+        ],
+        "title": "ProblemOut"
+      },
+      "ProblemVersionDetail": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "problem_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Problem Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "time_limit_ms": {
+            "type": "integer",
+            "title": "Time Limit Ms"
+          },
+          "memory_limit_mb": {
+            "type": "integer",
+            "title": "Memory Limit Mb"
+          },
+          "output_limit_bytes": {
+            "type": "integer",
+            "title": "Output Limit Bytes"
+          },
+          "max_points": {
+            "type": "integer",
+            "title": "Max Points"
+          },
+          "compare_mode": {
+            "$ref": "#/components/schemas/CompareMode"
+          },
+          "default_test_suite_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Test Suite Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "statement": {
+            "type": "string",
+            "title": "Statement"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "problem_id",
+          "version",
+          "time_limit_ms",
+          "memory_limit_mb",
+          "output_limit_bytes",
+          "max_points",
+          "compare_mode",
+          "default_test_suite_id",
+          "created_at",
+          "statement"
+        ],
+        "title": "ProblemVersionDetail"
+      },
+      "ProblemVersionIn": {
+        "properties": {
+          "statement": {
+            "type": "string",
+            "maxLength": 65536,
+            "title": "Statement",
+            "default": ""
+          },
+          "time_limit_ms": {
+            "type": "integer",
+            "maximum": 30000.0,
+            "minimum": 100.0,
+            "title": "Time Limit Ms",
+            "default": 2000
+          },
+          "memory_limit_mb": {
+            "type": "integer",
+            "maximum": 2048.0,
+            "minimum": 16.0,
+            "title": "Memory Limit Mb",
+            "default": 256
+          },
+          "output_limit_bytes": {
+            "type": "integer",
+            "maximum": 8388608.0,
+            "minimum": 256.0,
+            "title": "Output Limit Bytes",
+            "default": 65536
+          },
+          "max_points": {
+            "type": "integer",
+            "maximum": 100000.0,
+            "minimum": 0.0,
+            "title": "Max Points",
+            "default": 100
+          },
+          "compare_mode": {
+            "$ref": "#/components/schemas/CompareMode",
+            "default": "TRIM_TRAILING_WS"
+          },
+          "test_suite": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TestSuiteIn"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "test_suite_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Test Suite Id"
+          },
+          "publish": {
+            "type": "boolean",
+            "title": "Publish",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "ProblemVersionIn"
+      },
+      "ProblemVersionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "problem_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Problem Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "time_limit_ms": {
+            "type": "integer",
+            "title": "Time Limit Ms"
+          },
+          "memory_limit_mb": {
+            "type": "integer",
+            "title": "Memory Limit Mb"
+          },
+          "output_limit_bytes": {
+            "type": "integer",
+            "title": "Output Limit Bytes"
+          },
+          "max_points": {
+            "type": "integer",
+            "title": "Max Points"
+          },
+          "compare_mode": {
+            "$ref": "#/components/schemas/CompareMode"
+          },
+          "default_test_suite_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Test Suite Id"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "problem_id",
+          "version",
+          "time_limit_ms",
+          "memory_limit_mb",
+          "output_limit_bytes",
+          "max_points",
+          "compare_mode",
+          "default_test_suite_id",
+          "created_at"
+        ],
+        "title": "ProblemVersionOut"
+      },
+      "RejudgeIn": {
+        "properties": {
+          "problem_version_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Problem Version Id"
+          },
+          "test_suite_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Test Suite Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "problem_version_id",
+          "test_suite_id"
+        ],
+        "title": "RejudgeIn"
+      },
+      "ResultIn": {
+        "properties": {
+          "lease_epoch": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Lease Epoch"
+          },
+          "worker_id": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Worker Id"
+          },
+          "exec_mode": {
+            "type": "string",
+            "maxLength": 16,
+            "minLength": 1,
+            "title": "Exec Mode"
+          },
+          "runner_image": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runner Image"
+          },
+          "compile": {
+            "$ref": "#/components/schemas/CompileReportIn"
+          },
+          "tests": {
+            "items": {
+              "$ref": "#/components/schemas/TestReportIn"
+            },
+            "type": "array",
+            "maxItems": 500,
+            "title": "Tests"
+          },
+          "time_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Ms"
+          },
+          "memory_kb": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory Kb"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lease_epoch",
+          "worker_id",
+          "exec_mode"
+        ],
+        "title": "ResultIn"
+      },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "ORGANIZER",
+          "PARTICIPANT"
+        ],
+        "title": "Role"
+      },
+      "ScoringMode": {
+        "type": "string",
+        "enum": [
+          "ICPC",
+          "POINTS"
+        ],
+        "title": "ScoringMode"
+      },
+      "StandingOut": {
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "solved": {
+            "type": "integer",
+            "title": "Solved"
+          },
+          "points": {
+            "type": "integer",
+            "title": "Points"
+          },
+          "penalty_minutes": {
+            "type": "integer",
+            "title": "Penalty Minutes"
+          },
+          "last_solved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Solved At"
+          },
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/CellOut"
+            },
+            "type": "array",
+            "title": "Cells"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rank",
+          "user_id",
+          "display_name",
+          "solved",
+          "points",
+          "penalty_minutes",
+          "last_solved_at"
+        ],
+        "title": "StandingOut"
+      },
+      "SubmissionDetailOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "contest_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Contest Id"
+          },
+          "problem_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Problem Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubmissionStatus"
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Submitted At"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key"
+          },
+          "replayed": {
+            "type": "boolean",
+            "title": "Replayed",
+            "default": false
+          },
+          "authoritative_attempt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttemptOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latest_attempt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttemptOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Code"
+          },
+          "source_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Sha256"
+          },
+          "attempts": {
+            "items": {
+              "$ref": "#/components/schemas/AttemptOut"
+            },
+            "type": "array",
+            "title": "Attempts"
+          },
+          "test_results": {
+            "items": {
+              "$ref": "#/components/schemas/TestResultOut"
+            },
+            "type": "array",
+            "title": "Test Results"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "contest_id",
+          "problem_id",
+          "user_id",
+          "language",
+          "status",
+          "submitted_at",
+          "idempotency_key"
+        ],
+        "title": "SubmissionDetailOut"
+      },
+      "SubmissionIn": {
+        "properties": {
+          "problem_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Problem Id"
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "source_code": {
+            "type": "string",
+            "maxLength": 262144,
+            "minLength": 1,
+            "title": "Source Code"
+          },
+          "idempotency_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idempotency Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "problem_id",
+          "language",
+          "source_code"
+        ],
+        "title": "SubmissionIn"
+      },
+      "SubmissionOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "contest_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Contest Id"
+          },
+          "problem_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Problem Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SubmissionStatus"
+          },
+          "submitted_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Submitted At"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "title": "Idempotency Key"
+          },
+          "replayed": {
+            "type": "boolean",
+            "title": "Replayed",
+            "default": false
+          },
+          "authoritative_attempt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttemptOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "latest_attempt": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AttemptOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Code"
+          },
+          "source_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Sha256"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "contest_id",
+          "problem_id",
+          "user_id",
+          "language",
+          "status",
+          "submitted_at",
+          "idempotency_key"
+        ],
+        "title": "SubmissionOut"
+      },
+      "SubmissionStatus": {
+        "type": "string",
+        "enum": [
+          "QUEUED",
+          "RUNNING",
+          "JUDGED",
+          "JUDGE_FAILED"
+        ],
+        "title": "SubmissionStatus"
+      },
+      "TestCaseIn": {
+        "properties": {
+          "ordinal": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 1.0,
+            "title": "Ordinal"
+          },
+          "input": {
+            "type": "string",
+            "maxLength": 262144,
+            "title": "Input"
+          },
+          "expected_output": {
+            "type": "string",
+            "maxLength": 262144,
+            "title": "Expected Output"
+          },
+          "is_sample": {
+            "type": "boolean",
+            "title": "Is Sample",
+            "default": false
+          },
+          "weight": {
+            "type": "integer",
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Weight",
+            "default": 1
+          }
+        },
+        "type": "object",
+        "required": [
+          "ordinal",
+          "input",
+          "expected_output"
+        ],
+        "title": "TestCaseIn"
+      },
+      "TestReportIn": {
+        "properties": {
+          "test_case_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Test Case Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TestStatus"
+          },
+          "time_ms": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 600000.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Ms"
+          },
+          "memory_kb": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory Kb"
+          },
+          "exit_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit Code"
+          },
+          "output_bytes": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Output Bytes",
+            "default": 0
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "test_case_id",
+          "status"
+        ],
+        "title": "TestReportIn"
+      },
+      "TestResultOut": {
+        "properties": {
+          "ordinal": {
+            "type": "integer",
+            "title": "Ordinal"
+          },
+          "is_sample": {
+            "type": "boolean",
+            "title": "Is Sample"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TestStatus"
+          },
+          "time_ms": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Time Ms"
+          },
+          "memory_kb": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Memory Kb"
+          },
+          "output_bytes": {
+            "type": "integer",
+            "title": "Output Bytes"
+          },
+          "truncated": {
+            "type": "boolean",
+            "title": "Truncated"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ordinal",
+          "is_sample",
+          "status",
+          "time_ms",
+          "memory_kb",
+          "output_bytes",
+          "truncated"
+        ],
+        "title": "TestResultOut"
+      },
+      "TestStatus": {
+        "type": "string",
+        "enum": [
+          "PASSED",
+          "WRONG_OUTPUT",
+          "RUNTIME_ERROR",
+          "TIMEOUT",
+          "MEMORY_EXCEEDED",
+          "OUTPUT_EXCEEDED",
+          "SKIPPED"
+        ],
+        "title": "TestStatus"
+      },
+      "TestSuiteIn": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Label",
+            "default": ""
+          },
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/TestCaseIn"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Cases"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cases"
+        ],
+        "title": "TestSuiteIn"
+      },
+      "TestSuiteOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "problem_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Problem Id"
+          },
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "case_count": {
+            "type": "integer",
+            "title": "Case Count"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "problem_id",
+          "version",
+          "label",
+          "case_count",
+          "created_at"
+        ],
+        "title": "TestSuiteOut"
+      },
+      "TokenOut": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "user"
+        ],
+        "title": "TokenOut"
+      },
+      "TokenRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "TokenRequest"
+      },
+      "UserIn": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "display_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Display Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "display_name",
+          "role"
+        ],
+        "title": "UserIn"
+      },
+      "UserOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "org_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Org Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "email",
+          "display_name",
+          "role"
+        ],
+        "title": "UserOut"
+      },
+      "UserWithTokenOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "org_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Org Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "display_name": {
+            "type": "string",
+            "title": "Display Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "org_id",
+          "email",
+          "display_name",
+          "role"
+        ],
+        "title": "UserWithTokenOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Verdict": {
+        "type": "string",
+        "enum": [
+          "ACCEPTED",
+          "WRONG_ANSWER",
+          "COMPILE_ERROR",
+          "RUNTIME_ERROR",
+          "TIME_LIMIT_EXCEEDED",
+          "MEMORY_LIMIT_EXCEEDED",
+          "OUTPUT_LIMIT_EXCEEDED"
+        ],
+        "title": "Verdict"
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "meta",
+      "description": "Health, build labels, queue depth, failpoints."
+    },
+    {
+      "name": "identities",
+      "description": "Organizations, identities and the dev auth fixture."
+    },
+    {
+      "name": "contests",
+      "description": "Contests, participation, problems, versions, suites."
+    },
+    {
+      "name": "submissions",
+      "description": "Submitting, observing and rejudging."
+    },
+    {
+      "name": "leaderboard",
+      "description": "Standings and the consistency evidence routes."
+    },
+    {
+      "name": "judge plane",
+      "description": "Worker-only protocol. Separate credential scope."
+    }
+  ]
+}

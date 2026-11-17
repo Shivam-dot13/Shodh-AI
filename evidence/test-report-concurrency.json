@@ -1,15 +1,15 @@
 {
-  "label": "tests",
+  "label": "concurrency",
   "labels": {
-    "started_at": "2026-11-17T11:54:44+0000",
-    "commit": "unknown",
+    "started_at": "2026-11-17T12:02:49+0000",
+    "commit": "2a046fe",
     "configured_execution_mode": "docker",
     "api_base_url": "http://api:8000",
     "workers_running": false,
     "markers_selected": "concurrency",
     "api_version": {
       "service": "api",
-      "commit": "unknown",
+      "commit": "2a046fe",
       "execution_mode": "docker",
       "lease_seconds": 30,
       "max_deliveries": 3,
@@ -21,7 +21,7 @@
     },
     "data_version": "seed-v1",
     "programs_version": "programs-v1",
-    "seeded_at": "2026-11-17T11:54:39.181379+00:00"
+    "seeded_at": "2026-11-17T12:02:48.018827+00:00"
   },
   "totals": {
     "passed": 11
@@ -30,7 +30,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_payload_carries_hidden_data_only_on_the_judge_plane",
       "outcome": "passed",
-      "duration_s": 0.202,
+      "duration_s": 0.092,
       "markers": [
         "concurrency",
         "integration"
@@ -40,7 +40,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_two_competing_workers_never_get_the_same_job",
       "outcome": "passed",
-      "duration_s": 0.153,
+      "duration_s": 0.107,
       "markers": [
         "concurrency",
         "integration"
@@ -50,7 +50,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_a_duplicate_result_at_the_same_epoch_is_idempotent",
       "outcome": "passed",
-      "duration_s": 0.195,
+      "duration_s": 0.152,
       "markers": [
         "concurrency",
         "integration"
@@ -60,7 +60,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_an_expired_lease_is_reclaimed_and_the_old_holder_is_fenced_out",
       "outcome": "passed",
-      "duration_s": 0.169,
+      "duration_s": 0.146,
       "markers": [
         "concurrency",
         "integration"
@@ -70,7 +70,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_heartbeats_keep_a_lease_and_a_stale_heartbeat_is_refused",
       "outcome": "passed",
-      "duration_s": 0.115,
+      "duration_s": 0.103,
       "markers": [
         "concurrency",
         "integration"
@@ -80,7 +80,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_out_of_order_completion_lands_in_the_right_final_state",
       "outcome": "passed",
-      "duration_s": 0.188,
+      "duration_s": 0.185,
       "markers": [
         "concurrency",
         "integration"
@@ -90,7 +90,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_a_late_result_from_a_replaced_attempt_does_not_move_the_standings",
       "outcome": "passed",
-      "duration_s": 0.198,
+      "duration_s": 0.179,
       "markers": [
         "concurrency",
         "integration"
@@ -100,7 +100,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_retries_are_bounded_and_end_as_an_infrastructure_failure",
       "outcome": "passed",
-      "duration_s": 0.216,
+      "duration_s": 0.429,
       "markers": [
         "concurrency",
         "integration"
@@ -110,7 +110,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_a_result_outside_the_pinned_suite_is_refused",
       "outcome": "passed",
-      "duration_s": 0.123,
+      "duration_s": 0.135,
       "markers": [
         "concurrency",
         "integration"
@@ -120,7 +120,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_a_completed_attempt_cannot_be_rewritten",
       "outcome": "passed",
-      "duration_s": 0.123,
+      "duration_s": 0.128,
       "markers": [
         "concurrency",
         "integration"
@@ -130,7 +130,7 @@
     {
       "test": "tests/integration/test_recovery.py::test_a_worker_that_dies_before_acknowledging_produces_exactly_one_verdict",
       "outcome": "passed",
-      "duration_s": 0.141,
+      "duration_s": 0.142,
       "markers": [
         "concurrency",
         "integration"
@@ -138,5 +138,5 @@
       "execution_mode": "docker"
     }
   ],
-  "finished_at": "2026-11-17T11:54:46+0000"
+  "finished_at": "2026-11-17T12:02:52+0000"
 }
