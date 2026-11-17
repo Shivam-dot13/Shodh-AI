@@ -1,0 +1,156 @@
+{
+  "data_version": "seed-v1",
+  "notes": [
+    "Deterministic: identifiers are uuid5 of a stable name, so a reseed produces the same ids.",
+    "Contest windows are anchored to the seed run (open_from_hours is relative to now, truncated",
+    "to the hour) because a contest has to be open for a demo to be possible. The anchor is",
+    "recorded in evidence/seed-manifest.json.",
+    "Tokens are fixtures. They are stored hashed; the plaintext lives here and in the manifest."
+  ],
+  "organizations": [
+    {
+      "slug": "acme-university",
+      "name": "Acme University",
+      "users": [
+        {"email": "organizer@acme.test", "display_name": "Asha Organizer", "role": "ORGANIZER", "token": "shodh_tok_acme_organizer"},
+        {"email": "rohan@acme.test", "display_name": "Rohan Kumar", "role": "PARTICIPANT", "token": "shodh_tok_acme_rohan"},
+        {"email": "meera@acme.test", "display_name": "Meera Iyer", "role": "PARTICIPANT", "token": "shodh_tok_acme_meera"},
+        {"email": "dev@acme.test", "display_name": "Dev Patel", "role": "PARTICIPANT", "token": "shodh_tok_acme_dev"}
+      ]
+    },
+    {
+      "slug": "borealis-institute",
+      "name": "Borealis Institute",
+      "users": [
+        {"email": "organizer@borealis.test", "display_name": "Bo Organizer", "role": "ORGANIZER", "token": "shodh_tok_borealis_organizer"},
+        {"email": "lin@borealis.test", "display_name": "Lin Wei", "role": "PARTICIPANT", "token": "shodh_tok_borealis_lin"},
+        {"email": "sara@borealis.test", "display_name": "Sara Noor", "role": "PARTICIPANT", "token": "shodh_tok_borealis_sara"}
+      ]
+    }
+  ],
+  "problem_library": {
+    "sum-two": {
+      "title": "Sum of Two Integers",
+      "statement": "Read two integers a and b on standard input and print a + b.",
+      "time_limit_ms": 2000,
+      "memory_limit_mb": 128,
+      "output_limit_bytes": 8192,
+      "max_points": 100,
+      "compare_mode": "TRIM_TRAILING_WS",
+      "suite": {
+        "label": "sum-two v1",
+        "cases": [
+          {"ordinal": 1, "input": "2 3\n", "expected_output": "5\n", "is_sample": true, "weight": 1},
+          {"ordinal": 2, "input": "-4 1\n", "expected_output": "-3\n", "is_sample": true, "weight": 1},
+          {"ordinal": 3, "input": "0 0\n", "expected_output": "0\n", "is_sample": false, "weight": 1},
+          {"ordinal": 4, "input": "1000000 2000000\n", "expected_output": "3000000\n", "is_sample": false, "weight": 1},
+          {"ordinal": 5, "input": "-5 -5\n", "expected_output": "-10\n", "is_sample": false, "weight": 1}
+        ]
+      }
+    },
+    "max-in-list": {
+      "title": "Largest Value",
+      "statement": "The first line holds n. The next n integers are the list. Print the largest.",
+      "time_limit_ms": 2000,
+      "memory_limit_mb": 128,
+      "output_limit_bytes": 8192,
+      "max_points": 100,
+      "compare_mode": "TRIM_TRAILING_WS",
+      "suite": {
+        "label": "max-in-list v1",
+        "cases": [
+          {"ordinal": 1, "input": "3\n1 5 2\n", "expected_output": "5\n", "is_sample": true, "weight": 1},
+          {"ordinal": 2, "input": "1\n-7\n", "expected_output": "-7\n", "is_sample": false, "weight": 1},
+          {"ordinal": 3, "input": "5\n9 9 1 2 3\n", "expected_output": "9\n", "is_sample": false, "weight": 1},
+          {"ordinal": 4, "input": "4\n-1 -2 -3 -4\n", "expected_output": "-1\n", "is_sample": false, "weight": 1}
+        ]
+      }
+    },
+    "word-count": {
+      "title": "Count the Words",
+      "statement": "Print how many whitespace separated words appear on standard input.",
+      "time_limit_ms": 2000,
+      "memory_limit_mb": 128,
+      "output_limit_bytes": 8192,
+      "max_points": 100,
+      "compare_mode": "TRIM_TRAILING_WS",
+      "suite": {
+        "label": "word-count v1",
+        "cases": [
+          {"ordinal": 1, "input": "hello world\n", "expected_output": "2\n", "is_sample": true, "weight": 1},
+          {"ordinal": 2, "input": "one\n", "expected_output": "1\n", "is_sample": false, "weight": 1},
+          {"ordinal": 3, "input": "a b c d e\n", "expected_output": "5\n", "is_sample": false, "weight": 1}
+        ]
+      }
+    }
+  },
+  "contests": [
+    {
+      "org": "acme-university",
+      "slug": "autumn-open",
+      "title": "Acme Autumn Open",
+      "scoring_mode": "ICPC",
+      "penalty_minutes": 20,
+      "max_attempts_per_problem": null,
+      "open_from_hours": -1,
+      "open_until_hours": 720,
+      "participants": ["rohan@acme.test", "meera@acme.test", "dev@acme.test"],
+      "problems": [
+        {
+          "library": "sum-two",
+          "ordinal": 1,
+          "extra_suite": {
+            "label": "sum-two v2 (adds a large case)",
+            "cases": [
+              {"ordinal": 1, "input": "2 3\n", "expected_output": "5\n", "is_sample": true, "weight": 1},
+              {"ordinal": 2, "input": "-4 1\n", "expected_output": "-3\n", "is_sample": true, "weight": 1},
+              {"ordinal": 3, "input": "0 0\n", "expected_output": "0\n", "is_sample": false, "weight": 1},
+              {"ordinal": 4, "input": "1000000 2000000\n", "expected_output": "3000000\n", "is_sample": false, "weight": 1},
+              {"ordinal": 5, "input": "-5 -5\n", "expected_output": "-10\n", "is_sample": false, "weight": 1},
+              {"ordinal": 6, "input": "-2000000000 -2000000000\n", "expected_output": "-4000000000\n", "is_sample": false, "weight": 1}
+            ]
+          },
+          "extra_version": {
+            "statement": "Read two integers a and b on standard input and print a + b. Values fit in 64 bits.",
+            "time_limit_ms": 3000,
+            "memory_limit_mb": 160,
+            "output_limit_bytes": 8192,
+            "max_points": 120,
+            "compare_mode": "TRIM_TRAILING_WS",
+            "use_extra_suite": true,
+            "publish": false
+          }
+        },
+        {"library": "max-in-list", "ordinal": 2},
+        {"library": "word-count", "ordinal": 3}
+      ]
+    },
+    {
+      "org": "borealis-institute",
+      "slug": "winter-sprint",
+      "title": "Borealis Winter Sprint",
+      "scoring_mode": "POINTS",
+      "penalty_minutes": 0,
+      "max_attempts_per_problem": null,
+      "open_from_hours": -1,
+      "open_until_hours": 720,
+      "participants": ["lin@borealis.test", "sara@borealis.test"],
+      "problems": [
+        {"library": "sum-two", "ordinal": 1},
+        {"library": "word-count", "ordinal": 2}
+      ]
+    },
+    {
+      "org": "acme-university",
+      "slug": "spring-archive",
+      "title": "Acme Spring Archive (closed)",
+      "scoring_mode": "ICPC",
+      "penalty_minutes": 20,
+      "max_attempts_per_problem": 2,
+      "open_from_hours": -72,
+      "open_until_hours": -24,
+      "participants": ["rohan@acme.test"],
+      "problems": [{"library": "sum-two", "ordinal": 1}]
+    }
+  ]
+}

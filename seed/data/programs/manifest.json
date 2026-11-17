@@ -1,0 +1,138 @@
+{
+  "data_version": "programs-v1",
+  "note": "Roles are what each program is for; expected outcomes live in the test files, not here.",
+  "programs": [
+    {
+      "file": "sum_two_accepted.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "accepted"
+    },
+    {
+      "file": "sum_two_wrong.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "wrong_output"
+    },
+    {
+      "file": "sum_two_partial.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "partial_output"
+    },
+    {
+      "file": "sum_two_runtime_error.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "runtime_failure"
+    },
+    {
+      "file": "sum_two_timeout.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "timeout"
+    },
+    {
+      "file": "sum_two_excessive_output.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "excessive_output"
+    },
+    {
+      "file": "sum_two_memory_hog.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "memory_exceeded"
+    },
+    {
+      "file": "sum_two_compile_error.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "compile_error"
+    },
+    {
+      "file": "sum_two_runner_unavailable.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "runner_failure_controllable"
+    },
+    {
+      "file": "sum_two_sandbox_crash.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "sandbox_crash_controllable"
+    },
+    {
+      "file": "probe_network.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "probe_network"
+    },
+    {
+      "file": "probe_write_root.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "probe_readonly_rootfs"
+    },
+    {
+      "file": "probe_docker_socket.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "probe_docker_socket"
+    },
+    {
+      "file": "probe_whoami.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "probe_non_root"
+    },
+    {
+      "file": "probe_fork_bomb.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "probe_pids_limit"
+    },
+    {
+      "file": "max_in_list_accepted.py",
+      "problem": "max-in-list",
+      "language": "python3",
+      "role": "accepted"
+    },
+    {
+      "file": "max_in_list_wrong.py",
+      "problem": "max-in-list",
+      "language": "python3",
+      "role": "wrong_output"
+    },
+    {
+      "file": "word_count_accepted.py",
+      "problem": "word-count",
+      "language": "python3",
+      "role": "accepted"
+    },
+    {
+      "file": "sum_two_accepted.cpp",
+      "problem": "sum-two",
+      "language": "cpp17",
+      "role": "accepted"
+    },
+    {
+      "file": "sum_two_wrong.cpp",
+      "problem": "sum-two",
+      "language": "cpp17",
+      "role": "wrong_output"
+    },
+    {
+      "file": "sum_two_compile_error.cpp",
+      "problem": "sum-two",
+      "language": "cpp17",
+      "role": "compile_error"
+    },
+    {
+      "file": "sum_two_runtime_error.cpp",
+      "problem": "sum-two",
+      "language": "cpp17",
+      "role": "runtime_failure"
+    }
+  ]
+}

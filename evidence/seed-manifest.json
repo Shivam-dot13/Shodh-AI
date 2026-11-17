@@ -1,0 +1,381 @@
+{
+  "data_version": "seed-v1",
+  "programs_version": "programs-v1",
+  "seeded_at": "2026-11-17T11:57:39.467493+00:00",
+  "window_anchor": "2026-11-17T11:00:00+00:00",
+  "execution_mode": "docker",
+  "commit": "unknown",
+  "service_tokens": {
+    "judge": "shodh_judge_dev_token",
+    "platform_admin": "shodh_platform_admin_dev_token"
+  },
+  "organizations": {
+    "acme-university": {
+      "id": "724c3d26-75c6-5d2e-ae62-74f3164d7ff9",
+      "slug": "acme-university",
+      "name": "Acme University",
+      "users": {
+        "organizer@acme.test": {
+          "id": "acca16a0-e7e6-5afa-90e6-99485704b3bd",
+          "role": "ORGANIZER",
+          "display_name": "Asha Organizer",
+          "token": "shodh_tok_acme_organizer"
+        },
+        "rohan@acme.test": {
+          "id": "a7720ad3-709d-57de-939e-8da6d9f31590",
+          "role": "PARTICIPANT",
+          "display_name": "Rohan Kumar",
+          "token": "shodh_tok_acme_rohan"
+        },
+        "meera@acme.test": {
+          "id": "2440623e-c423-5dd6-967e-932cd0300461",
+          "role": "PARTICIPANT",
+          "display_name": "Meera Iyer",
+          "token": "shodh_tok_acme_meera"
+        },
+        "dev@acme.test": {
+          "id": "29bebf65-28da-5ee4-bb94-0e4ee7d7c190",
+          "role": "PARTICIPANT",
+          "display_name": "Dev Patel",
+          "token": "shodh_tok_acme_dev"
+        }
+      }
+    },
+    "borealis-institute": {
+      "id": "7b291120-7710-5944-a3b4-2495681d8704",
+      "slug": "borealis-institute",
+      "name": "Borealis Institute",
+      "users": {
+        "organizer@borealis.test": {
+          "id": "390fb8b6-489d-52c4-be0a-9a46c932210b",
+          "role": "ORGANIZER",
+          "display_name": "Bo Organizer",
+          "token": "shodh_tok_borealis_organizer"
+        },
+        "lin@borealis.test": {
+          "id": "e22ab5d8-8a7e-5168-af59-0018c2700d4a",
+          "role": "PARTICIPANT",
+          "display_name": "Lin Wei",
+          "token": "shodh_tok_borealis_lin"
+        },
+        "sara@borealis.test": {
+          "id": "cd6013e5-9f1e-5c2f-8f65-2086139a1ee1",
+          "role": "PARTICIPANT",
+          "display_name": "Sara Noor",
+          "token": "shodh_tok_borealis_sara"
+        }
+      }
+    }
+  },
+  "contests": {
+    "autumn-open": {
+      "id": "315a90c5-864f-590a-8e6e-b8a8ecdfd429",
+      "org": "acme-university",
+      "org_id": "724c3d26-75c6-5d2e-ae62-74f3164d7ff9",
+      "scoring_mode": "ICPC",
+      "penalty_minutes": 20,
+      "max_attempts_per_problem": null,
+      "starts_at": "2026-11-17T10:00:00+00:00",
+      "ends_at": "2026-12-17T11:00:00+00:00",
+      "open_now": true,
+      "participants": [
+        "rohan@acme.test",
+        "meera@acme.test",
+        "dev@acme.test"
+      ],
+      "problems": {
+        "sum-two": {
+          "slug": "sum-two",
+          "problem_id": "2c71e06d-8754-570e-9a99-92c4051634ae",
+          "title": "Sum of Two Integers",
+          "current_version_id": "9975d2c5-4e4e-5983-b189-4d3993dd8e1d",
+          "versions": {
+            "1": {
+              "id": "9975d2c5-4e4e-5983-b189-4d3993dd8e1d",
+              "test_suite_id": "6ab8713b-57fe-5af5-902e-5323456b21ef",
+              "max_points": 100
+            },
+            "2": {
+              "id": "cb73cdb1-c6b4-5c2b-b834-6247ebce0681",
+              "test_suite_id": "32a211f5-3e75-5d1c-8f6c-5546112585f5",
+              "max_points": 120
+            }
+          },
+          "test_suites": {
+            "1": {
+              "id": "6ab8713b-57fe-5af5-902e-5323456b21ef",
+              "cases": 5
+            },
+            "2": {
+              "id": "32a211f5-3e75-5d1c-8f6c-5546112585f5",
+              "cases": 6
+            }
+          }
+        },
+        "max-in-list": {
+          "slug": "max-in-list",
+          "problem_id": "77b7e754-5717-5ddd-86bc-5b35bfc54acb",
+          "title": "Largest Value",
+          "current_version_id": "c7852ed0-ee54-546e-a9b3-7d204691e942",
+          "versions": {
+            "1": {
+              "id": "c7852ed0-ee54-546e-a9b3-7d204691e942",
+              "test_suite_id": "42298d5c-d307-57d8-8080-1b28b663c029",
+              "max_points": 100
+            }
+          },
+          "test_suites": {
+            "1": {
+              "id": "42298d5c-d307-57d8-8080-1b28b663c029",
+              "cases": 4
+            }
+          }
+        },
+        "word-count": {
+          "slug": "word-count",
+          "problem_id": "d6888243-94b4-51cb-80b0-f4bf9d14f3cc",
+          "title": "Count the Words",
+          "current_version_id": "9d6e33b8-638e-54a5-b407-6396d53f1397",
+          "versions": {
+            "1": {
+              "id": "9d6e33b8-638e-54a5-b407-6396d53f1397",
+              "test_suite_id": "f5779fe3-9004-549d-aa59-55875557c773",
+              "max_points": 100
+            }
+          },
+          "test_suites": {
+            "1": {
+              "id": "f5779fe3-9004-549d-aa59-55875557c773",
+              "cases": 3
+            }
+          }
+        }
+      }
+    },
+    "winter-sprint": {
+      "id": "d333ffbd-759e-59ec-9d2f-43515d7a174e",
+      "org": "borealis-institute",
+      "org_id": "7b291120-7710-5944-a3b4-2495681d8704",
+      "scoring_mode": "POINTS",
+      "penalty_minutes": 0,
+      "max_attempts_per_problem": null,
+      "starts_at": "2026-11-17T10:00:00+00:00",
+      "ends_at": "2026-12-17T11:00:00+00:00",
+      "open_now": true,
+      "participants": [
+        "lin@borealis.test",
+        "sara@borealis.test"
+      ],
+      "problems": {
+        "sum-two": {
+          "slug": "sum-two",
+          "problem_id": "8680e4ec-02a0-5406-a6f5-8460c94fce0d",
+          "title": "Sum of Two Integers",
+          "current_version_id": "1936371b-bfe8-5cc3-9461-28d122ba3557",
+          "versions": {
+            "1": {
+              "id": "1936371b-bfe8-5cc3-9461-28d122ba3557",
+              "test_suite_id": "cde4aadb-b7ce-5259-b13b-69f3c3cbefa1",
+              "max_points": 100
+            }
+          },
+          "test_suites": {
+            "1": {
+              "id": "cde4aadb-b7ce-5259-b13b-69f3c3cbefa1",
+              "cases": 5
+            }
+          }
+        },
+        "word-count": {
+          "slug": "word-count",
+          "problem_id": "4ae47e01-5a28-5600-84f6-39a29994f3c6",
+          "title": "Count the Words",
+          "current_version_id": "3b6b5d6e-8c31-52ac-a999-d9a5dd1c6ac5",
+          "versions": {
+            "1": {
+              "id": "3b6b5d6e-8c31-52ac-a999-d9a5dd1c6ac5",
+              "test_suite_id": "758796d3-1289-5539-8d7e-5f80a0ae2fb2",
+              "max_points": 100
+            }
+          },
+          "test_suites": {
+            "1": {
+              "id": "758796d3-1289-5539-8d7e-5f80a0ae2fb2",
+              "cases": 3
+            }
+          }
+        }
+      }
+    },
+    "spring-archive": {
+      "id": "5bd84a39-8627-58d4-a3dc-86525d505ae4",
+      "org": "acme-university",
+      "org_id": "724c3d26-75c6-5d2e-ae62-74f3164d7ff9",
+      "scoring_mode": "ICPC",
+      "penalty_minutes": 20,
+      "max_attempts_per_problem": 2,
+      "starts_at": "2026-11-14T11:00:00+00:00",
+      "ends_at": "2026-11-16T11:00:00+00:00",
+      "open_now": false,
+      "participants": [
+        "rohan@acme.test"
+      ],
+      "problems": {
+        "sum-two": {
+          "slug": "sum-two",
+          "problem_id": "f23124db-b7c0-570b-bf33-91b95ea19a14",
+          "title": "Sum of Two Integers",
+          "current_version_id": "3c3b3bc6-42f0-5f65-96b0-7b66963841d7",
+          "versions": {
+            "1": {
+              "id": "3c3b3bc6-42f0-5f65-96b0-7b66963841d7",
+              "test_suite_id": "0f2aca31-f4a0-52ab-b467-851973f7bd9e",
+              "max_points": 100
+            }
+          },
+          "test_suites": {
+            "1": {
+              "id": "0f2aca31-f4a0-52ab-b467-851973f7bd9e",
+              "cases": 5
+            }
+          }
+        }
+      }
+    }
+  },
+  "programs": [
+    {
+      "file": "sum_two_accepted.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "accepted"
+    },
+    {
+      "file": "sum_two_wrong.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "wrong_output"
+    },
+    {
+      "file": "sum_two_partial.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "partial_output"
+    },
+    {
+      "file": "sum_two_runtime_error.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "runtime_failure"
+    },
+    {
+      "file": "sum_two_timeout.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "timeout"
+    },
+    {
+      "file": "sum_two_excessive_output.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "excessive_output"
+    },
+    {
+      "file": "sum_two_memory_hog.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "memory_exceeded"
+    },
+    {
+      "file": "sum_two_compile_error.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "compile_error"
+    },
+    {
+      "file": "sum_two_runner_unavailable.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "runner_failure_controllable"
+    },
+    {
+      "file": "sum_two_sandbox_crash.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "sandbox_crash_controllable"
+    },
+    {
+      "file": "probe_network.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "probe_network"
+    },
+    {
+      "file": "probe_write_root.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "probe_readonly_rootfs"
+    },
+    {
+      "file": "probe_docker_socket.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "probe_docker_socket"
+    },
+    {
+      "file": "probe_whoami.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "probe_non_root"
+    },
+    {
+      "file": "probe_fork_bomb.py",
+      "problem": "sum-two",
+      "language": "python3",
+      "role": "probe_pids_limit"
+    },
+    {
+      "file": "max_in_list_accepted.py",
+      "problem": "max-in-list",
+      "language": "python3",
+      "role": "accepted"
+    },
+    {
+      "file": "max_in_list_wrong.py",
+      "problem": "max-in-list",
+      "language": "python3",
+      "role": "wrong_output"
+    },
+    {
+      "file": "word_count_accepted.py",
+      "problem": "word-count",
+      "language": "python3",
+      "role": "accepted"
+    },
+    {
+      "file": "sum_two_accepted.cpp",
+      "problem": "sum-two",
+      "language": "cpp17",
+      "role": "accepted"
+    },
+    {
+      "file": "sum_two_wrong.cpp",
+      "problem": "sum-two",
+      "language": "cpp17",
+      "role": "wrong_output"
+    },
+    {
+      "file": "sum_two_compile_error.cpp",
+      "problem": "sum-two",
+      "language": "cpp17",
+      "role": "compile_error"
+    },
+    {
+      "file": "sum_two_runtime_error.cpp",
+      "problem": "sum-two",
+      "language": "cpp17",
+      "role": "runtime_failure"
+    }
+  ],
+  "programs_dir": "seed/data/programs"
+}

@@ -1,0 +1,154 @@
+# The whole system: `docker compose up --build` migrates, seeds and starts two API processes
+# and two judge workers against one PostgreSQL instance.
+#
+# Why two of each: every correctness claim in this submission has to hold with more than one
+# process competing for the same rows, so the default deployment is the one the tests assert
+# against. The judge queue is a table, not a broker, so scaling is just more replicas.
+
+x-app-env: &app-env
+  DATABASE_URL: postgresql+psycopg://shodh:shodh_dev_password@postgres:5432/shodh
+  EXEC_MODE: ${EXEC_MODE:-docker}
+  LEASE_SECONDS: ${LEASE_SECONDS:-30}
+  MAX_DELIVERIES: ${MAX_DELIVERIES:-3}
+  DEV_AUTH_ENABLED: ${DEV_AUTH_ENABLED:-true}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  COMMIT_SHA: ${COMMIT_SHA:-unknown}
+  JUDGE_SERVICE_TOKEN: ${JUDGE_SERVICE_TOKEN:-shodh_judge_dev_token}
+  PLATFORM_ADMIN_TOKEN: ${PLATFORM_ADMIN_TOKEN:-shodh_platform_admin_dev_token}
+  RUNNER_IMAGE_PYTHON3: ${RUNNER_IMAGE_PYTHON3:-shodh-runner-python:1}
+  RUNNER_IMAGE_CPP17: ${RUNNER_IMAGE_CPP17:-shodh-runner-cpp:1}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: shodh
+      POSTGRES_PASSWORD: shodh_dev_password
+      POSTGRES_DB: shodh
+    command:
+      - postgres
+      - -c
+      - max_connections=200
+      - -c
+      - log_min_duration_statement=500
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U shodh -d shodh"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-55432}:5432"
+
+  # One-shot: alembic upgrade head, then the deterministic seed bundle. The API will not start
+  # until this has exited successfully, so a fresh `up` is always a usable system.
+  migrate:
+    build:
+      context: .
+      args:
+        COMMIT_SHA: ${COMMIT_SHA:-unknown}
+    environment:
+      <<: *app-env
+      SERVICE_NAME: migrate
+    command: ["/srv/scripts/migrate-and-seed.sh"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+    volumes:
+      - ./evidence:/srv/evidence
+
+  api:
+    build:
+      context: .
+      args:
+        COMMIT_SHA: ${COMMIT_SHA:-unknown}
+    environment:
+      <<: *app-env
+      SERVICE_NAME: api
+      API_WORKERS: ${API_WORKERS:-2}
+    user: "10001:10001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - "${API_PORT:-8000}:8000"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz').status==200 else 1)\""]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # The judge. Holds the Docker socket so it can start a sibling container per attempt; the
+  # submitted program never sees the socket, no host path is mounted into it, and the container
+  # it runs in has no network. Runs as root because the socket is root-owned; nothing
+  # participant-supplied is executed in this container.
+  worker:
+    build:
+      context: .
+      args:
+        COMMIT_SHA: ${COMMIT_SHA:-unknown}
+    environment:
+      <<: *app-env
+      SERVICE_NAME: worker
+      API_BASE_URL: http://api:8000
+      JUDGE_CONCURRENCY: ${JUDGE_CONCURRENCY:-2}
+      WORKER_FAILPOINTS: ${WORKER_FAILPOINTS:-}
+    command: ["python", "-m", "worker.main"]
+    working_dir: /srv
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    deploy:
+      replicas: ${WORKER_REPLICAS:-2}
+
+  # Tooling, not part of `up`. Started explicitly:
+  #   docker compose run --rm tests pytest -m "unit or integration"
+  #   docker compose run --rm bench python -m bench.workload --help
+  tests:
+    build:
+      context: .
+      args:
+        COMMIT_SHA: ${COMMIT_SHA:-unknown}
+    profiles: ["tools"]
+    environment:
+      <<: *app-env
+      SERVICE_NAME: tests
+      API_BASE_URL: http://api:8000
+      EVIDENCE_DIR: /srv/evidence
+    working_dir: /srv
+    entrypoint: ["python", "-m", "pytest"]
+    command: ["-m", "unit or integration"]
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ./evidence:/srv/evidence
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  bench:
+    build:
+      context: .
+      args:
+        COMMIT_SHA: ${COMMIT_SHA:-unknown}
+    profiles: ["tools"]
+    environment:
+      <<: *app-env
+      SERVICE_NAME: bench
+      API_BASE_URL: http://api:8000
+      EVIDENCE_DIR: /srv/evidence
+    working_dir: /srv
+    entrypoint: ["python", "-m", "bench.workload"]
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - ./evidence:/srv/evidence
+
+volumes:
+  pgdata:
