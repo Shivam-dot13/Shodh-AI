@@ -1,8 +1,8 @@
 {
   "label": "end-to-end",
-  "started_at": "2026-11-18T10:08:23+0000",
-  "finished_at": "2026-11-18T10:13:24+0000",
-  "duration_s": 60.43,
+  "started_at": "2026-11-18T10:30:07+0000",
+  "finished_at": "2026-11-18T10:35:08+0000",
+  "duration_s": 60.67,
   "configuration": {
     "concurrency": 32,
     "submit_share": 0.3,
@@ -16,7 +16,7 @@
     "drain_seconds": 240.0
   },
   "environment": {
-    "commit": "817bae6",
+    "commit": "b9cf5af",
     "execution_mode": "docker",
     "lease_seconds": 30,
     "max_deliveries": 3,
@@ -35,7 +35,7 @@
   },
   "dataset": {
     "label": "end-to-end",
-    "contest_id": "32dde0bd-3994-49c4-819d-3564ab71702f",
+    "contest_id": "c5ff19e8-507d-40e1-9e0f-abe24203d0ea",
     "participants": 120,
     "problems": 5,
     "submissions_prefilled": 1800,
@@ -45,153 +45,153 @@
   "baseline_sequential": {
     "GET /healthz": {
       "count": 30,
-      "min_ms": 1.24,
-      "p50_ms": 1.63,
-      "p90_ms": 2.75,
-      "p95_ms": 3.59,
-      "p99_ms": 3.72,
-      "max_ms": 3.72,
-      "mean_ms": 1.88
+      "min_ms": 1.26,
+      "p50_ms": 1.46,
+      "p90_ms": 2.5,
+      "p95_ms": 2.69,
+      "p99_ms": 3.0,
+      "max_ms": 3.0,
+      "mean_ms": 1.72
     },
     "GET /leaderboard": {
       "count": 30,
-      "min_ms": 10.51,
-      "p50_ms": 13.51,
-      "p90_ms": 22.05,
-      "p95_ms": 25.92,
-      "p99_ms": 28.91,
-      "max_ms": 28.91,
-      "mean_ms": 15.47
+      "min_ms": 10.49,
+      "p50_ms": 11.81,
+      "p90_ms": 16.04,
+      "p95_ms": 18.22,
+      "p99_ms": 19.29,
+      "max_ms": 19.29,
+      "mean_ms": 12.84
     },
     "GET /submissions": {
       "count": 30,
-      "min_ms": 9.79,
-      "p50_ms": 13.13,
-      "p90_ms": 16.4,
-      "p95_ms": 18.48,
-      "p99_ms": 18.82,
-      "max_ms": 18.82,
-      "mean_ms": 13.29
+      "min_ms": 9.17,
+      "p50_ms": 10.45,
+      "p90_ms": 13.45,
+      "p95_ms": 15.26,
+      "p99_ms": 15.66,
+      "max_ms": 15.66,
+      "mean_ms": 11.07
     },
     "POST /submissions": {
       "count": 10,
-      "min_ms": 14.22,
-      "p50_ms": 20.23,
-      "p90_ms": 56.78,
-      "p95_ms": 87.27,
-      "p99_ms": 87.27,
-      "max_ms": 87.27,
-      "mean_ms": 33.26
+      "min_ms": 14.29,
+      "p50_ms": 26.2,
+      "p90_ms": 44.64,
+      "p95_ms": 59.59,
+      "p99_ms": 59.59,
+      "max_ms": 59.59,
+      "mean_ms": 30.48
     }
   },
   "results": {
-    "total_requests": 3529,
-    "throughput_rps": 58.4,
+    "total_requests": 4122,
+    "throughput_rps": 67.94,
     "errors": 0,
     "error_rate": 0.0,
     "per_endpoint": {
       "GET /leaderboard": {
-        "count": 1738,
-        "min_ms": 139.58,
-        "p50_ms": 458.11,
-        "p90_ms": 719.11,
-        "p95_ms": 823.11,
-        "p99_ms": 1114.4,
-        "max_ms": 1351.56,
-        "mean_ms": 485.94,
-        "requests_per_second": 28.76,
+        "count": 2056,
+        "min_ms": 44.29,
+        "p50_ms": 416.61,
+        "p90_ms": 791.08,
+        "p95_ms": 866.22,
+        "p99_ms": 1117.95,
+        "max_ms": 1424.25,
+        "mean_ms": 412.06,
+        "requests_per_second": 33.89,
         "errors": 0,
         "status_codes": {
-          "200": 1738
+          "200": 2056
         }
       },
       "GET /submissions": {
-        "count": 371,
-        "min_ms": 173.39,
-        "p50_ms": 455.41,
-        "p90_ms": 694.39,
-        "p95_ms": 772.58,
-        "p99_ms": 1061.86,
-        "max_ms": 1318.75,
-        "mean_ms": 474.51,
-        "requests_per_second": 6.14,
+        "count": 440,
+        "min_ms": 61.36,
+        "p50_ms": 501.4,
+        "p90_ms": 775.41,
+        "p95_ms": 875.03,
+        "p99_ms": 1059.42,
+        "max_ms": 1133.71,
+        "mean_ms": 423.09,
+        "requests_per_second": 7.25,
         "errors": 0,
         "status_codes": {
-          "200": 371
+          "200": 440
         }
       },
       "GET /submissions/{id}": {
-        "count": 361,
-        "min_ms": 148.76,
-        "p50_ms": 397.94,
-        "p90_ms": 657.74,
-        "p95_ms": 715.83,
-        "p99_ms": 910.01,
-        "max_ms": 1150.18,
-        "mean_ms": 432.62,
-        "requests_per_second": 5.97,
+        "count": 396,
+        "min_ms": 51.87,
+        "p50_ms": 442.06,
+        "p90_ms": 757.85,
+        "p95_ms": 802.89,
+        "p99_ms": 930.29,
+        "max_ms": 1153.95,
+        "mean_ms": 384.86,
+        "requests_per_second": 6.53,
         "errors": 0,
         "status_codes": {
-          "200": 361
+          "200": 396
         }
       },
       "POST /submissions": {
-        "count": 1059,
-        "min_ms": 246.15,
-        "p50_ms": 669.37,
-        "p90_ms": 960.84,
-        "p95_ms": 1087.06,
-        "p99_ms": 1421.13,
-        "max_ms": 1982.92,
-        "mean_ms": 698.04,
-        "requests_per_second": 17.52,
+        "count": 1230,
+        "min_ms": 93.91,
+        "p50_ms": 687.07,
+        "p90_ms": 1128.82,
+        "p95_ms": 1220.65,
+        "p99_ms": 1394.46,
+        "max_ms": 1743.29,
+        "mean_ms": 601.44,
+        "requests_per_second": 20.27,
         "errors": 0,
         "status_codes": {
-          "201": 1059
+          "201": 1230
         }
       }
     }
   },
   "judging": {
-    "attempts_created_during_run": 1059,
+    "attempts_created_during_run": 1230,
     "attempt_states": {
-      "PENDING": 518,
-      "COMPLETED": 537,
+      "COMPLETED": 798,
+      "PENDING": 428,
       "DISPATCHED": 4
     },
     "execution_modes": {
-      "not-judged-yet": 522,
-      "docker": 537
+      "docker": 798,
+      "not-judged-yet": 432
     },
     "queue_delay": {
-      "count": 541,
-      "min_ms": 4227.25,
-      "p50_ms": 164055.86,
-      "p90_ms": 257330.2,
-      "p95_ms": 264513.52,
-      "p99_ms": 271118.64,
-      "max_ms": 273469.28,
-      "mean_ms": 158214.02
+      "count": 802,
+      "min_ms": 2915.94,
+      "p50_ms": 143398.99,
+      "p90_ms": 238128.99,
+      "p95_ms": 250591.57,
+      "p99_ms": 260144.73,
+      "max_ms": 262982.42,
+      "mean_ms": 141504.19
     },
     "judge_wall_time": {
-      "count": 537,
-      "min_ms": 948.05,
-      "p50_ms": 1853.1,
-      "p90_ms": 2676.49,
-      "p95_ms": 3075.86,
-      "p99_ms": 3787.45,
-      "max_ms": 4127.01,
-      "mean_ms": 1949.52
+      "count": 798,
+      "min_ms": 1032.51,
+      "p50_ms": 1253.1,
+      "p90_ms": 1693.46,
+      "p95_ms": 1785.75,
+      "p99_ms": 2033.88,
+      "max_ms": 2278.32,
+      "mean_ms": 1323.79
     },
     "program_execution_time": {
-      "count": 537,
+      "count": 798,
       "min_ms": 21.0,
-      "p50_ms": 47.0,
-      "p90_ms": 72.0,
-      "p95_ms": 84.0,
-      "p99_ms": 117.0,
-      "max_ms": 228.0,
-      "mean_ms": 51.09
+      "p50_ms": 35.0,
+      "p90_ms": 48.0,
+      "p95_ms": 54.0,
+      "p99_ms": 68.0,
+      "max_ms": 137.0,
+      "mean_ms": 36.6
     }
   },
   "consistency_after_run": {

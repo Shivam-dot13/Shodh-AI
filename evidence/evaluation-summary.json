@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-18T10:05:55+0000",
-  "commit": "817bae6",
+  "generated_at": "2026-11-18T10:27:57+0000",
+  "commit": "b9cf5af",
   "execution_mode": "docker",
   "configuration": {
     "lease_seconds": 30,
@@ -13,7 +13,7 @@
   },
   "data_version": "seed-v1",
   "programs_version": "programs-v1",
-  "seeded_at": "2026-11-18T10:05:53.007845+00:00",
+  "seeded_at": "2026-11-18T10:27:55.660159+00:00",
   "test_suites": {
     "concurrency": {
       "file": "test-report-concurrency.json",
@@ -21,7 +21,7 @@
         "passed": 12
       },
       "labels": {
-        "commit": "817bae6",
+        "commit": "b9cf5af",
         "configured_execution_mode": "docker",
         "data_version": "seed-v1",
         "workers_running": false,
@@ -35,7 +35,7 @@
         "passed": 71
       },
       "labels": {
-        "commit": "817bae6",
+        "commit": "b9cf5af",
         "configured_execution_mode": "docker",
         "data_version": "seed-v1",
         "workers_running": true,
@@ -49,7 +49,7 @@
         "passed": 15
       },
       "labels": {
-        "commit": "817bae6",
+        "commit": "b9cf5af",
         "configured_execution_mode": "docker",
         "data_version": "seed-v1",
         "workers_running": true,
@@ -63,7 +63,7 @@
         "passed": 45
       },
       "labels": {
-        "commit": "817bae6",
+        "commit": "b9cf5af",
         "configured_execution_mode": "docker",
         "data_version": "seed-v1",
         "workers_running": true,
@@ -72,120 +72,9 @@
       "failed_tests": []
     }
   },
-  "workloads": {
-    "api-only": {
-      "file": "workload-api-only.json",
-      "duration_s": 60.28,
-      "concurrency": 32,
-      "dataset": {
-        "label": "api-only",
-        "contest_id": "5dc6cced-b6cf-46ab-81e8-4f29859f68bb",
-        "participants": 120,
-        "problems": 5,
-        "submissions_prefilled": 1800,
-        "verdicts_prefilled": 1800,
-        "cells": 600
-      },
-      "throughput_rps": 131.14,
-      "errors": 0,
-      "execution_mode": "docker",
-      "queue_delay_p95_ms": null,
-      "consistency_after_run": {
-        "serving_matches_rebuild": true,
-        "serving_matches_naive": true,
-        "rows": 120
-      },
-      "per_endpoint_p95_ms": {
-        "GET /leaderboard": 538.27,
-        "GET /submissions": 497.1,
-        "GET /submissions/{id}": 489.93,
-        "POST /submissions": 767.94
-      }
-    },
-    "end-to-end": {
-      "file": "workload-end-to-end.json",
-      "duration_s": 60.42,
-      "concurrency": 32,
-      "dataset": {
-        "label": "end-to-end",
-        "contest_id": "9831b7b0-a1a8-4ef9-9c01-48afd2c79df2",
-        "participants": 120,
-        "problems": 5,
-        "submissions_prefilled": 1800,
-        "verdicts_prefilled": 1800,
-        "cells": 600
-      },
-      "throughput_rps": 73.03,
-      "errors": 0,
-      "execution_mode": "docker",
-      "queue_delay_p95_ms": 254360.21,
-      "consistency_after_run": {
-        "serving_matches_rebuild": true,
-        "serving_matches_naive": true,
-        "rows": 120
-      },
-      "per_endpoint_p95_ms": {
-        "GET /leaderboard": 610.38,
-        "GET /submissions": 577.15,
-        "GET /submissions/{id}": 532.38,
-        "POST /submissions": 855.97
-      }
-    }
-  },
-  "bottleneck_investigations": {
-    "leaderboard-large": {
-      "file": "bottleneck-leaderboard-large.json",
-      "dataset": {
-        "label": "bottleneck-leaderboard-large",
-        "contest_id": "16de89cf-2bf3-444a-9969-4d899651f421",
-        "participants": 400,
-        "problems": 6,
-        "submissions_prefilled": 9600,
-        "verdicts_prefilled": 9600,
-        "cells": 2400
-      },
-      "improvement": {
-        "p50_speedup": 2.69,
-        "p95_speedup": 3.12,
-        "p95_ms_before": 108.12,
-        "p95_ms_after": 34.61
-      },
-      "correctness_after_change": {
-        "serving_matches_rebuild": true,
-        "serving_matches_naive": true,
-        "rows": 400,
-        "rebuild_changed_anything": false,
-        "cells_rebuilt": 2400
-      }
-    },
-    "leaderboard": {
-      "file": "bottleneck-leaderboard.json",
-      "dataset": {
-        "label": "bottleneck-leaderboard",
-        "contest_id": "d7612468-2eab-4dd7-881f-22f63902ae73",
-        "participants": 400,
-        "problems": 6,
-        "submissions_prefilled": 2400,
-        "verdicts_prefilled": 2400,
-        "cells": 2400
-      },
-      "improvement": {
-        "p50_speedup": 1.68,
-        "p95_speedup": 2.1,
-        "p95_ms_before": 43.35,
-        "p95_ms_after": 20.63
-      },
-      "correctness_after_change": {
-        "serving_matches_rebuild": true,
-        "serving_matches_naive": true,
-        "rows": 400,
-        "rebuild_changed_anything": false,
-        "cells_rebuilt": 2400
-      }
-    }
-  },
+  "workloads": {},
+  "bottleneck_investigations": {},
   "demo_logs": [
-    "demo-20261117T132824Z.log",
-    "demo-20261118T100549Z.log"
+    "demo-20261118T102751Z.log"
   ]
 }

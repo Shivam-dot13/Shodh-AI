@@ -1,15 +1,15 @@
 {
   "label": "unit",
   "labels": {
-    "started_at": "2026-11-18T10:02:40+0000",
-    "commit": "817bae6",
+    "started_at": "2026-11-18T13:08:52+0000",
+    "commit": "8a9dc8d",
     "configured_execution_mode": "docker",
     "api_base_url": "http://api:8000",
     "workers_running": true,
     "markers_selected": "unit",
     "api_version": {
       "service": "api",
-      "commit": "817bae6",
+      "commit": "8a9dc8d",
       "execution_mode": "docker",
       "lease_seconds": 30,
       "max_deliveries": 3,
@@ -20,7 +20,7 @@
     },
     "data_version": "seed-v1",
     "programs_version": "programs-v1",
-    "seeded_at": "2026-11-18T10:02:38.253648+00:00"
+    "seeded_at": "2026-11-18T13:08:49.061862+00:00"
   },
   "totals": {
     "passed": 45
@@ -38,7 +38,7 @@
     {
       "test": "tests/unit/test_scoring_rules.py::TestCellScoring::test_accepted_scores_the_pinned_max_points",
       "outcome": "passed",
-      "duration_s": 0.002,
+      "duration_s": 0.0,
       "markers": [
         "unit"
       ],
@@ -110,7 +110,7 @@
     {
       "test": "tests/unit/test_scoring_rules.py::TestRanking::test_equal_scores_share_a_rank_and_order_is_total",
       "outcome": "passed",
-      "duration_s": 0.0,
+      "duration_s": 0.001,
       "markers": [
         "unit"
       ],
@@ -236,7 +236,7 @@
     {
       "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_compile_failure_short_circuits_everything",
       "outcome": "passed",
-      "duration_s": 0.0,
+      "duration_s": 0.001,
       "markers": [
         "unit"
       ],
@@ -304,7 +304,7 @@
     {
       "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_partial_credit_is_weighted_and_never_reaches_full_marks",
       "outcome": "passed",
-      "duration_s": 0.001,
+      "duration_s": 0.003,
       "markers": [
         "unit"
       ],
@@ -421,7 +421,7 @@
     {
       "test": "tests/unit/test_verdict_and_compare.py::TestClassification::test_peak_rss_near_the_limit_is_a_memory_limit",
       "outcome": "passed",
-      "duration_s": 0.0,
+      "duration_s": 0.001,
       "markers": [
         "unit"
       ],
@@ -437,5 +437,5 @@
       "execution_mode": "docker"
     }
   ],
-  "finished_at": "2026-11-18T10:02:41+0000"
+  "finished_at": "2026-11-18T13:08:53+0000"
 }

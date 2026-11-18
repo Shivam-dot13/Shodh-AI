@@ -1,15 +1,15 @@
 {
   "label": "realrunner",
   "labels": {
-    "started_at": "2026-11-18T10:04:31+0000",
-    "commit": "817bae6",
+    "started_at": "2026-11-18T13:10:54+0000",
+    "commit": "8a9dc8d",
     "configured_execution_mode": "docker",
     "api_base_url": "http://api:8000",
     "workers_running": true,
     "markers_selected": "realrunner",
     "api_version": {
       "service": "api",
-      "commit": "817bae6",
+      "commit": "8a9dc8d",
       "execution_mode": "docker",
       "lease_seconds": 30,
       "max_deliveries": 3,
@@ -20,7 +20,7 @@
     },
     "data_version": "seed-v1",
     "programs_version": "programs-v1",
-    "seeded_at": "2026-11-18T10:04:29.085410+00:00"
+    "seeded_at": "2026-11-18T13:10:52.032918+00:00"
   },
   "totals": {
     "passed": 15
@@ -29,7 +29,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestResourceLimits::test_wall_clock_limit_is_enforced",
       "outcome": "passed",
-      "duration_s": 8.511,
+      "duration_s": 8.94,
       "markers": [
         "realrunner"
       ],
@@ -38,7 +38,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestResourceLimits::test_output_limit_is_enforced",
       "outcome": "passed",
-      "duration_s": 1.167,
+      "duration_s": 2.178,
       "markers": [
         "realrunner"
       ],
@@ -47,7 +47,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestResourceLimits::test_memory_limit_is_enforced",
       "outcome": "passed",
-      "duration_s": 1.408,
+      "duration_s": 2.006,
       "markers": [
         "realrunner"
       ],
@@ -56,7 +56,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestResourceLimits::test_a_crashing_program_is_a_runtime_error_not_a_judge_failure",
       "outcome": "passed",
-      "duration_s": 1.188,
+      "duration_s": 1.201,
       "markers": [
         "realrunner"
       ],
@@ -65,7 +65,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestResourceLimits::test_process_count_is_capped",
       "outcome": "passed",
-      "duration_s": 9.638,
+      "duration_s": 6.223,
       "markers": [
         "realrunner"
       ],
@@ -74,7 +74,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestSandboxBoundary::test_the_sandbox_has_no_network",
       "outcome": "passed",
-      "duration_s": 1.577,
+      "duration_s": 2.339,
       "markers": [
         "realrunner"
       ],
@@ -83,7 +83,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestSandboxBoundary::test_the_root_filesystem_is_read_only",
       "outcome": "passed",
-      "duration_s": 1.2,
+      "duration_s": 1.215,
       "markers": [
         "realrunner"
       ],
@@ -92,7 +92,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestSandboxBoundary::test_submitted_code_does_not_run_as_root",
       "outcome": "passed",
-      "duration_s": 1.387,
+      "duration_s": 1.461,
       "markers": [
         "realrunner"
       ],
@@ -101,7 +101,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestSandboxBoundary::test_the_docker_control_socket_is_not_reachable",
       "outcome": "passed",
-      "duration_s": 1.196,
+      "duration_s": 1.783,
       "markers": [
         "realrunner"
       ],
@@ -110,7 +110,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestCleanup::test_no_sandbox_container_is_left_behind",
       "outcome": "passed",
-      "duration_s": 10.843,
+      "duration_s": 12.825,
       "markers": [
         "realrunner"
       ],
@@ -119,7 +119,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestCleanup::test_the_runner_image_is_recorded_on_every_attempt",
       "outcome": "passed",
-      "duration_s": 1.153,
+      "duration_s": 1.431,
       "markers": [
         "realrunner"
       ],
@@ -128,7 +128,7 @@
     {
       "test": "tests/realrunner/test_language.py::test_a_correct_program_is_accepted",
       "outcome": "passed",
-      "duration_s": 1.156,
+      "duration_s": 1.42,
       "markers": [
         "realrunner"
       ],
@@ -137,7 +137,7 @@
     {
       "test": "tests/realrunner/test_language.py::test_a_wrong_program_is_a_wrong_answer",
       "outcome": "passed",
-      "duration_s": 1.217,
+      "duration_s": 1.229,
       "markers": [
         "realrunner"
       ],
@@ -146,7 +146,7 @@
     {
       "test": "tests/realrunner/test_language.py::test_a_syntax_error_is_a_compile_error",
       "outcome": "passed",
-      "duration_s": 1.189,
+      "duration_s": 1.48,
       "markers": [
         "realrunner"
       ],
@@ -155,12 +155,12 @@
     {
       "test": "tests/realrunner/test_language.py::test_version_lists_the_language_it_can_run",
       "outcome": "passed",
-      "duration_s": 0.016,
+      "duration_s": 0.024,
       "markers": [
         "realrunner"
       ],
       "execution_mode": "docker"
     }
   ],
-  "finished_at": "2026-11-18T10:05:14+0000"
+  "finished_at": "2026-11-18T13:11:41+0000"
 }

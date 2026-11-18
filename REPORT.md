@@ -113,90 +113,102 @@ comparison happens there, so a program that escaped its process still has no ans
 The harness reports observations, the worker classifies them, the API derives the verdict: no
 component both observes and decides.
 
-The limits are in [docs/execution-and-isolation.md](docs/execution-and-isolation.md): Docker on a
-shared kernel with the default seccomp profile, not a microVM; no user-namespace remapping;
-`/box` mounted `exec` because a compiled submission must be executable somewhere; and the worker
-holding the daemon socket, which is host-root equivalent and belongs on its own machine in
-production. Submitted code cannot reach that socket, and a seeded probe asserts it on every run.
-Cleanup is a `finally` block plus a labelled sweep at worker start-up, and the real-runner suite
-asserts zero leftover containers after a run containing a timeout and a crash.
+What this does not cover is listed in
+[docs/execution-and-isolation.md](docs/execution-and-isolation.md): Docker on a shared kernel
+with the default seccomp profile, no user-namespace remapping, and the worker holding the daemon
+socket, which is host-root equivalent. Submitted code cannot reach that socket and a seeded probe
+asserts it every run. Cleanup is a `finally` block plus a labelled sweep at worker start-up, and
+the real-runner suite asserts zero leftover containers after a run containing a timeout and a
+crash.
 
 ## 5. Performance evidence
 
-One developer machine: Docker Desktop on WSL2, 8 vCPU and 7.7 GiB visible, with PostgreSQL,
-both API processes, both judge workers and the load generator sharing it. Absolute values belong
-to that machine as much as to the code; the comparisons are between runs on the same host,
-minutes apart. Every figure is in `evidence/workload-*.json` and `evidence/bottleneck-*.json`,
-labelled with commit, execution mode, dataset and request mix.
+One developer machine: Docker Desktop on WSL2, 8 vCPU and 7.7 GiB visible, with PostgreSQL, both
+API processes, both judge workers and the load generator all sharing it. Every figure below is in
+`evidence/workload-*.json`, labelled with the commit, execution mode, dataset and request mix.
 
 **Dataset** (built through the public API, history judged by a synthetic judge labelled
 `bench-double`, then reused byte-for-byte by both runs): 120 participants, 5 problems, 1,800
-judged submissions, 600 cells, ICPC. **Workload:** 32 virtual users, closed loop, 60 s, mix
-30 % submit / 10 % submission detail / 10 % submission list / 50 % leaderboard, mode `docker`.
+judged submissions, 600 cells. **Workload:** 32 virtual users, closed loop, 60 s, mix 30 %
+submit / 10 % submission detail / 10 % submission list / 50 % leaderboard, mode `docker`.
 
-| | uncontended p50 | 32 users p50 | p95 | p99 |
-| ------------------------------- | ---: | ---: | ---: | ---: |
-| `GET /healthz`                  | 1.5 ms  | — | — | — |
-| `GET /leaderboard`              | 12.4 ms | 128.3 ms | 469.7 ms | 623.0 ms |
-| `GET /contests/{id}/submissions`| 10.0 ms | 225.4 ms | 434.8 ms | 521.5 ms |
-| `GET /submissions/{id}`         | —       | 190.4 ms | 414.0 ms | 489.3 ms |
-| `POST /submissions`             | 14.7 ms | 207.5 ms | 685.3 ms | 780.8 ms |
+First, what is reproducible. Uncontended, one request at a time, the same figures came back on
+every run I did today:
 
-*API only — judge stopped, nothing executed: 125.5 req/s, 0 errors in 7,553 requests.* Same mix
-with the judge running: **58.4 req/s, 0 errors in 3,529**, leaderboard p50 458.1 ms, submit p50
-669.4 ms.
+| | p50 |
+| ------------------------------- | ---: |
+| `GET /healthz`                  | 1.4 ms |
+| `GET /contests/{id}/submissions`| 10.9 ms |
+| `GET /leaderboard`              | 11.8 ms |
+| `POST /submissions`             | 14.4 ms |
 
-Uncontended the API costs 10–15 ms per request, and `/healthz` at 1.5 ms shows that is database
-work, not framework overhead. At 32 users the deployment sits at its throughput ceiling, so the
-percentiles are mostly queueing: Little's law puts the average at 32 ÷ 125 ≈ 255 ms, which is
-about where the p50s land. Running the judge costs 53 % of throughput (125 → 58 req/s) because
-four sandboxes compete for the same eight cores.
+So the API costs 10 to 15 ms per request, and `/healthz` at 1.4 ms says that is database work
+rather than framework overhead.
 
-**API overhead versus program execution.** Judging is asynchronous, so execution is never inside
-a response; it comes from the stored records:
+Under 32 concurrent users, with the judge stopped so nothing is executed: **72.7 req/s, 0 errors
+in 4,382 requests**, leaderboard p50 371.8 ms, p95 538.7 ms, submit p50 562.4 ms, p95 732.2 ms.
+With the judge running: **67.9 req/s, 0 errors in 4,122**, leaderboard p50 416.6 ms, submit p50
+687.1 ms.
+
+A caveat rather than a claim: across four runs on this host the saturated throughput came back
+as 72, 121, 125 and 131 req/s on identical code and data. That spread is wider than the gap
+between the two runs above, so I will not put a number on what judging costs the API. What the
+saturated figures do show is that the deployment is at its ceiling and that latency there is
+queueing, not work: 32 users at 72 req/s implies about 440 ms, which is where the p50s sit. Zero
+errors in 8,504 requests across both runs, and the three-way standings check passed after each.
+
+**API overhead versus program execution.** Judging is asynchronous, so execution never sits
+inside an API response. It comes from the stored records instead:
 
 | | p50 | p95 |
 | ------------------------------------------------- | ---: | ---: |
-| program execution (what the submitted code spent) | 47 ms | 84 ms |
-| judge wall time per attempt (lifecycle included)  | 1,853 ms | 3,076 ms |
-| queue delay (job committed → leased)              | 164 s | 265 s |
+| program execution (what the submitted code spent) | 35 ms | 54 ms |
+| judge wall time per attempt (lifecycle included)  | 1,253 ms | 1,786 ms |
+| queue delay (job committed to leased)             | 143 s | 251 s |
 
-The middle row is the finding worth acting on: **97 % of judge wall time is container lifecycle,
-not the program.** Four sandboxes at ~1.85 s is a shade over 2 attempts/s while the API accepts
-17 submissions/s, so under sustained load the queue grows and the 164 s delay is that arithmetic,
-not a defect. An independent run confirms the rate: draining a 1,632-job backlog produced 2,256
-verdicts in ~12 minutes, 3.1 a second. The queue is the shock absorber and capacity scales with `--scale worker=N`; the
-change with the best return is a pre-warmed sandbox pool instead of create/start/wait/remove per
-attempt, and it touches one class.
+This is the finding, and unlike the throughput numbers it is stable: across every run today the
+split came out the same, **about 97 % of judge wall time is container lifecycle, not the
+program.** Four sandboxes at roughly 1.25 s is about 3 attempts a second, while the API accepts
+around 20 submissions a second, so under sustained load the queue grows and the 143 s delay is
+that arithmetic rather than a defect. A separate observation agrees on the rate: draining a
+1,632-job backlog produced 2,256 verdicts in about 12 minutes, 3.1 a second.
+
+The queue is the shock absorber, and capacity scales with `--scale worker=N`. The best return is
+a pre-warmed sandbox pool instead of create, start, wait, remove per attempt, and it touches one
+class.
 
 ## 6. The investigated bottleneck: the leaderboard
 
-Every participant polls it. Two implementations of the same answer are kept in the code so the
-difference can be measured: `naive` derives every cell per request from `submissions` and
-`judging_attempts` (`DISTINCT ON` for each submission's authoritative attempt, then window
-functions for the ICPC rules); `standings` reads the `problem_scores` cells the verdict
-transaction already maintained. Measured sequentially, 60 requests per path, judge stopped:
+Every participant polls it, so it is the hottest read in a contest. Two implementations of the
+same answer are kept in the code so the difference can be measured rather than argued about:
+`naive` derives every standings cell per request from `submissions` and `judging_attempts`
+(`DISTINCT ON` for each submission's authoritative attempt, then window functions for the
+scoring rules), while `standings` reads the `problem_scores` cells the verdict transaction
+already maintained.
 
-| 400 participants × 6 problems  | judged submissions | naive DB time | maintained DB time | client p50 | p95 |
-| ------------------------------ | ---: | ---: | ---: | --- | --- |
-| `bottleneck-leaderboard`       | 2,400 | 16.7 ms | **3.1 ms** | 29.4 → 18.6 ms | 1.6× |
-| `bottleneck-leaderboard-large` | 9,600 | 58.9 ms | **2.9 ms** | 54.9 → 18.6 ms | 3.4× |
+Measured back to back in one process, 60 sequential requests per path, same dataset, judge
+stopped so the host is as quiet as I can make it:
 
-`EXPLAIN (ANALYZE, BUFFERS)` says why: the naive path sequentially scans `judging_attempts`,
-hash-joins it to the contest's submissions, then sorts and window-aggregates the result, while
-the maintained path scans 2,400 narrow `problem_scores` rows once and hash-aggregates them.
-Quadrupling the submissions makes the naive path **3.5× slower** while the maintained path does
-not move at all — the point is not the 5–20× ratio at any one size but that naive cost grows
-with stored attempts while maintained cost grows with participants. The client sees a smaller
-multiple (1.6× then 3.4× at p95) because a fixed ~10 ms of HTTP, auth, serialisation and
-the per-problem cell query is in every request; the database time is what decides whether a
-50,000-submission contest stays usable.
+| 400 participants x 6 problems  | judged submissions | naive p50 | maintained p50 | p95 gain |
+| ------------------------------ | ---: | ---: | ---: | ---: |
+| `bottleneck-leaderboard`       | 2,400 | 28.8 ms | **17.9 ms** | 2.0x |
+| `bottleneck-leaderboard-large` | 9,600 | 51.9 ms | **17.6 ms** | 4.1x |
 
-**Trade-off.** The maintained cells cost one locked-row update per verdict, and
-`standings_version` serialises verdict commits within a contest — nowhere near binding when
-judging is bounded at ~2 attempts/s. **Correctness after the change** is checked:
-`serving == rebuild` and `serving == naive` hold at both sizes, and recomputing all 2,400 cells
-from the authoritative records changes nothing (`rebuild_changed_anything: false`).
+Quadrupling the submissions costs the naive path 80 % more latency (28.8 to 51.9 ms) and the
+maintained path nothing at all (17.9 to 17.6 ms). That is the point, rather than the ratio at any
+one size: naive cost grows with the number of stored attempts, maintained cost grows only with
+the number of participants in the contest. Those are 60 samples each, so they are what I trust; the
+single `EXPLAIN (ANALYZE)` times (49.9 and 56.9 ms naive against 2.7 and 2.9 ms maintained) agree
+but are one sample apiece. The plans say why: naive sequentially scans `judging_attempts`,
+hash-joins it to the contest's submissions, then sorts and window-aggregates; maintained scans
+2,400 narrow `problem_scores` rows once and hash-aggregates them.
+
+**The trade-off.** The maintained cells cost one locked-row update inside every verdict
+transaction, and `standings_version` serialises verdict commits within a contest, which is
+nowhere near binding when judging is capped at about 3 attempts a second. **Correctness after
+the change** is checked rather than assumed: `serving == rebuild` and `serving == naive` both
+hold at both dataset sizes, and recomputing all 2,400 cells from the authoritative records
+changes nothing (`rebuild_changed_anything: false`).
 
 ## 7. One injected failure, its recovery, and the stored outcome
 
@@ -219,11 +231,10 @@ after, consistency check still passing.
 
 ## Known limitations
 
-1. **Isolation is Docker, not a VM** — shared kernel, default seccomp, no user-namespace
-   remapping, `/box` mounted `exec`; hostile input would want gVisor, Firecracker or nsjail. The
-   worker also holds the Docker socket (host-root equivalent): submitted code cannot reach it,
-   but in production the judge belongs on its own machines or a rootless daemon.
-2. **Container lifecycle dominates judging** (1.85 s against 47 ms of program); a pre-warmed
+1. **Isolation is Docker, not a VM** — shared kernel, default seccomp, `/box` mounted `exec`;
+   hostile input would want gVisor or nsjail. The worker holds the Docker socket, so in
+   production the judge belongs on its own machines or a rootless daemon.
+2. **Container lifecycle dominates judging** (1.25 s against 35 ms of program); a pre-warmed
    pool is the next piece of work.
 3. **`standings_version` is a hot row** serialising verdict commits per contest — it buys a
    freshness marker with no stale-cache path; a per-contest sequence would relax it.

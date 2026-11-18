@@ -8,3 +8,4 @@ venv/
 .coverage
 evidence/local/
 evidence/.dataset-*.json
+scripts/evaluate.ps1

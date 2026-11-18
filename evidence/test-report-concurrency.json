@@ -1,15 +1,15 @@
 {
   "label": "concurrency",
   "labels": {
-    "started_at": "2026-11-18T10:05:21+0000",
-    "commit": "817bae6",
+    "started_at": "2026-11-18T13:11:54+0000",
+    "commit": "8a9dc8d",
     "configured_execution_mode": "docker",
     "api_base_url": "http://api:8000",
     "workers_running": false,
     "markers_selected": "concurrency",
     "api_version": {
       "service": "api",
-      "commit": "817bae6",
+      "commit": "8a9dc8d",
       "execution_mode": "docker",
       "lease_seconds": 30,
       "max_deliveries": 3,
@@ -20,16 +20,17 @@
     },
     "data_version": "seed-v1",
     "programs_version": "programs-v1",
-    "seeded_at": "2026-11-18T10:05:19.157307+00:00"
+    "seeded_at": "2026-11-18T13:11:50.237193+00:00"
   },
   "totals": {
-    "passed": 12
+    "passed": 11,
+    "failed": 1
   },
   "results": [
     {
       "test": "tests/integration/test_judge_protocol.py::test_payload_carries_hidden_data_only_on_the_judge_plane",
       "outcome": "passed",
-      "duration_s": 0.081,
+      "duration_s": 0.181,
       "markers": [
         "concurrency",
         "integration"
@@ -39,7 +40,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_two_competing_workers_never_get_the_same_job",
       "outcome": "passed",
-      "duration_s": 0.091,
+      "duration_s": 0.184,
       "markers": [
         "concurrency",
         "integration"
@@ -49,7 +50,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_a_duplicate_result_at_the_same_epoch_is_idempotent",
       "outcome": "passed",
-      "duration_s": 0.152,
+      "duration_s": 0.295,
       "markers": [
         "concurrency",
         "integration"
@@ -59,7 +60,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_an_expired_lease_is_reclaimed_and_the_old_holder_is_fenced_out",
       "outcome": "passed",
-      "duration_s": 0.131,
+      "duration_s": 0.241,
       "markers": [
         "concurrency",
         "integration"
@@ -69,7 +70,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_heartbeats_keep_a_lease_and_a_stale_heartbeat_is_refused",
       "outcome": "passed",
-      "duration_s": 0.103,
+      "duration_s": 0.243,
       "markers": [
         "concurrency",
         "integration"
@@ -79,7 +80,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_out_of_order_completion_lands_in_the_right_final_state",
       "outcome": "passed",
-      "duration_s": 0.154,
+      "duration_s": 0.478,
       "markers": [
         "concurrency",
         "integration"
@@ -89,7 +90,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_a_late_result_from_a_replaced_attempt_does_not_move_the_standings",
       "outcome": "passed",
-      "duration_s": 0.166,
+      "duration_s": 0.581,
       "markers": [
         "concurrency",
         "integration"
@@ -99,7 +100,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_retries_are_bounded_and_end_as_an_infrastructure_failure",
       "outcome": "passed",
-      "duration_s": 0.218,
+      "duration_s": 0.478,
       "markers": [
         "concurrency",
         "integration"
@@ -109,7 +110,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_a_result_outside_the_pinned_suite_is_refused",
       "outcome": "passed",
-      "duration_s": 0.12,
+      "duration_s": 0.421,
       "markers": [
         "concurrency",
         "integration"
@@ -119,7 +120,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_a_completed_attempt_cannot_be_rewritten",
       "outcome": "passed",
-      "duration_s": 0.114,
+      "duration_s": 0.53,
       "markers": [
         "concurrency",
         "integration"
@@ -129,7 +130,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_a_lease_can_be_restricted_to_one_contest",
       "outcome": "passed",
-      "duration_s": 0.183,
+      "duration_s": 0.481,
       "markers": [
         "concurrency",
         "integration"
@@ -138,8 +139,8 @@
     },
     {
       "test": "tests/integration/test_recovery.py::test_a_worker_that_dies_before_acknowledging_produces_exactly_one_verdict",
-      "outcome": "passed",
-      "duration_s": 0.144,
+      "outcome": "failed",
+      "duration_s": 0.331,
       "markers": [
         "concurrency",
         "integration"
@@ -147,5 +148,5 @@
       "execution_mode": "docker"
     }
   ],
-  "finished_at": "2026-11-18T10:05:23+0000"
+  "finished_at": "2026-11-18T13:12:00+0000"
 }

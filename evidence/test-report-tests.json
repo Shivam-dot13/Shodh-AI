@@ -1,0 +1,41 @@
+{
+  "label": "tests",
+  "labels": {
+    "started_at": "2026-11-18T13:12:40+0000",
+    "commit": "unknown",
+    "configured_execution_mode": "docker",
+    "api_base_url": "http://api:8000",
+    "workers_running": false,
+    "markers_selected": "concurrency",
+    "api_version": {
+      "service": "api",
+      "commit": "unknown",
+      "execution_mode": "docker",
+      "lease_seconds": 30,
+      "max_deliveries": 3,
+      "languages": {
+        "python3": "shodh-runner-python:1"
+      },
+      "failpoints_armed": []
+    },
+    "data_version": "seed-v1",
+    "programs_version": "programs-v1",
+    "seeded_at": "2026-11-18T13:12:33.361807+00:00"
+  },
+  "totals": {
+    "failed": 1
+  },
+  "results": [
+    {
+      "test": "tests/integration/test_recovery.py::test_a_worker_that_dies_before_acknowledging_produces_exactly_one_verdict",
+      "outcome": "failed",
+      "duration_s": 0.405,
+      "markers": [
+        "concurrency",
+        "integration"
+      ],
+      "execution_mode": "docker"
+    }
+  ],
+  "finished_at": "2026-11-18T13:12:41+0000"
+}
