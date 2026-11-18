@@ -23,12 +23,10 @@ class Scope(str, enum.Enum):
 
 class ScoringMode(str, enum.Enum):
     ICPC = "ICPC"
-    POINTS = "POINTS"
 
 
 class Language(str, enum.Enum):
     PYTHON3 = "python3"
-    CPP17 = "cpp17"
 
 
 class CompareMode(str, enum.Enum):
@@ -111,7 +109,3 @@ class JobState(str, enum.Enum):
     DONE = "DONE"
     DEAD = "DEAD"
 
-
-class ExecMode(str, enum.Enum):
-    DOCKER = "docker"
-    LOCAL = "local"

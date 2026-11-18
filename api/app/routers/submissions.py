@@ -22,7 +22,6 @@ from ..models import AttemptTestResult, JudgingAttempt, Submission
 from ..schemas import (
     AttemptOrganizerOut,
     AttemptOut,
-    BulkRejudgeOut,
     Page,
     PageEnvelope,
     RejudgeIn,
@@ -243,61 +242,6 @@ def list_attempts(
     return PageEnvelope[AttemptOrganizerOut](
         items=[AttemptOrganizerOut.model_validate(a) for a in attempts],
         page=Page(limit=len(attempts), offset=0, total=len(attempts), returned=len(attempts)),
-    )
-
-
-@router.post(
-    "/problems/{problem_id}/rejudge",
-    response_model=BulkRejudgeOut,
-    status_code=status.HTTP_202_ACCEPTED,
-    summary="Rejudge every submission of a problem against a chosen version pair (organizer)",
-)
-def rejudge_problem(
-    problem_id: uuid.UUID,
-    body: RejudgeIn,
-    user_id: uuid.UUID | None = Query(default=None, description="restrict to one participant"),
-    limit: int = Query(default=500, ge=1, le=5000),
-    x_request_id: str | None = Header(default=None, alias="X-Request-Id"),
-    principal: Principal = Depends(require_organizer),
-    session: Session = Depends(get_session),
-) -> BulkRejudgeOut:
-    """Queues one new attempt per submission, oldest first.
-
-    Each submission is rejudged in its own transaction, so a large rejudge does not hold one
-    long-lived lock, and a failure part way through leaves the submissions it already queued
-    correctly queued. Every new attempt is appended; nothing is overwritten, and each one
-    becomes authoritative for its submission only once it completes.
-    """
-    problem, contest = access.get_problem(session, principal, problem_id)
-    access.require_organizer_of(principal, contest)
-
-    filters = [Submission.problem_id == problem.id]
-    if user_id is not None:
-        filters.append(Submission.user_id == user_id)
-    rows = session.execute(
-        select(Submission)
-        .where(*filters)
-        .order_by(Submission.submitted_at, Submission.id)
-        .limit(limit)
-    ).scalars().all()
-
-    queued: list[uuid.UUID] = []
-    for submission in rows:
-        attempt = submission_service.rejudge(
-            session,
-            principal,
-            submission,
-            problem_version_id=body.problem_version_id,
-            test_suite_id=body.test_suite_id,
-            request_id=x_request_id or current_request_id(),
-        )
-        queued.append(attempt.id)
-    return BulkRejudgeOut(
-        problem_id=problem.id,
-        submissions_matched=len(rows),
-        attempts_queued=len(queued),
-        problem_version_id=body.problem_version_id,
-        test_suite_id=body.test_suite_id,
     )
 
 

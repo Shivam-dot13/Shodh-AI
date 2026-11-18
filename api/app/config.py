@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     db_pool_size: int = 10
     db_max_overflow: int = 20
 
-    # "docker" -> submitted code runs in a locked-down sibling container.
-    # "local"  -> submitted code runs as a subprocess with rlimits only (no container isolation).
+    # Recorded on every attempt and in every result file, so no measurement can be mistaken
+    # for one taken under different conditions.
     exec_mode: str = "docker"
 
     # Judge protocol.

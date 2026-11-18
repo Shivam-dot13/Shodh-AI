@@ -1,34 +1,33 @@
 {
   "label": "unit",
   "labels": {
-    "started_at": "2026-11-17T11:59:58+0000",
-    "commit": "2a046fe",
+    "started_at": "2026-11-18T10:02:40+0000",
+    "commit": "817bae6",
     "configured_execution_mode": "docker",
     "api_base_url": "http://api:8000",
     "workers_running": true,
     "markers_selected": "unit",
     "api_version": {
       "service": "api",
-      "commit": "2a046fe",
+      "commit": "817bae6",
       "execution_mode": "docker",
       "lease_seconds": 30,
       "max_deliveries": 3,
       "languages": {
-        "python3": "shodh-runner-python:1",
-        "cpp17": "shodh-runner-cpp:1"
+        "python3": "shodh-runner-python:1"
       },
       "failpoints_armed": []
     },
     "data_version": "seed-v1",
     "programs_version": "programs-v1",
-    "seeded_at": "2026-11-17T11:59:55.002311+00:00"
+    "seeded_at": "2026-11-18T10:02:38.253648+00:00"
   },
   "totals": {
-    "passed": 47
+    "passed": 45
   },
   "results": [
     {
-      "test": "tests/unit/test_scoring_rules.py::TestIcpc::test_unsolved_cell_scores_nothing",
+      "test": "tests/unit/test_scoring_rules.py::TestCellScoring::test_unsolved_cell_scores_nothing",
       "outcome": "passed",
       "duration_s": 0.0,
       "markers": [
@@ -37,7 +36,16 @@
       "execution_mode": "docker"
     },
     {
-      "test": "tests/unit/test_scoring_rules.py::TestIcpc::test_accepted_scores_the_pinned_max_points",
+      "test": "tests/unit/test_scoring_rules.py::TestCellScoring::test_accepted_scores_the_pinned_max_points",
+      "outcome": "passed",
+      "duration_s": 0.002,
+      "markers": [
+        "unit"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/unit/test_scoring_rules.py::TestCellScoring::test_penalty_counts_only_rejections_before_the_solve",
       "outcome": "passed",
       "duration_s": 0.0,
       "markers": [
@@ -46,7 +54,7 @@
       "execution_mode": "docker"
     },
     {
-      "test": "tests/unit/test_scoring_rules.py::TestIcpc::test_penalty_counts_only_rejections_before_the_solve",
+      "test": "tests/unit/test_scoring_rules.py::TestCellScoring::test_elapsed_minutes_floor_not_round",
       "outcome": "passed",
       "duration_s": 0.0,
       "markers": [
@@ -55,7 +63,7 @@
       "execution_mode": "docker"
     },
     {
-      "test": "tests/unit/test_scoring_rules.py::TestIcpc::test_elapsed_minutes_floor_not_round",
+      "test": "tests/unit/test_scoring_rules.py::TestCellScoring::test_arrival_order_does_not_matter",
       "outcome": "passed",
       "duration_s": 0.0,
       "markers": [
@@ -64,7 +72,7 @@
       "execution_mode": "docker"
     },
     {
-      "test": "tests/unit/test_scoring_rules.py::TestIcpc::test_arrival_order_does_not_matter",
+      "test": "tests/unit/test_scoring_rules.py::TestCellScoring::test_first_accepted_wins_even_if_a_later_one_exists",
       "outcome": "passed",
       "duration_s": 0.0,
       "markers": [
@@ -73,7 +81,7 @@
       "execution_mode": "docker"
     },
     {
-      "test": "tests/unit/test_scoring_rules.py::TestIcpc::test_first_accepted_wins_even_if_a_later_one_exists",
+      "test": "tests/unit/test_scoring_rules.py::TestCellScoring::test_a_compile_error_counts_as_a_rejection",
       "outcome": "passed",
       "duration_s": 0.0,
       "markers": [
@@ -82,25 +90,7 @@
       "execution_mode": "docker"
     },
     {
-      "test": "tests/unit/test_scoring_rules.py::TestPoints::test_best_score_wins",
-      "outcome": "passed",
-      "duration_s": 0.0,
-      "markers": [
-        "unit"
-      ],
-      "execution_mode": "docker"
-    },
-    {
-      "test": "tests/unit/test_scoring_rules.py::TestPoints::test_earliest_submission_wins_a_tie",
-      "outcome": "passed",
-      "duration_s": 0.0,
-      "markers": [
-        "unit"
-      ],
-      "execution_mode": "docker"
-    },
-    {
-      "test": "tests/unit/test_scoring_rules.py::TestPoints::test_no_penalty_in_points_mode",
+      "test": "tests/unit/test_scoring_rules.py::TestCellScoring::test_empty_cell_is_zero_everything",
       "outcome": "passed",
       "duration_s": 0.0,
       "markers": [
@@ -111,7 +101,7 @@
     {
       "test": "tests/unit/test_scoring_rules.py::TestRanking::test_more_solved_outranks_lower_penalty",
       "outcome": "passed",
-      "duration_s": 0.002,
+      "duration_s": 0.0,
       "markers": [
         "unit"
       ],
@@ -129,15 +119,6 @@
     {
       "test": "tests/unit/test_scoring_rules.py::TestRanking::test_dense_rank_skips_after_a_tie",
       "outcome": "passed",
-      "duration_s": 0.001,
-      "markers": [
-        "unit"
-      ],
-      "execution_mode": "docker"
-    },
-    {
-      "test": "tests/unit/test_scoring_rules.py::TestRanking::test_points_mode_ranks_on_points",
-      "outcome": "passed",
       "duration_s": 0.0,
       "markers": [
         "unit"
@@ -145,7 +126,7 @@
       "execution_mode": "docker"
     },
     {
-      "test": "tests/unit/test_scoring_rules.py::test_empty_cell_is_zero_everything",
+      "test": "tests/unit/test_scoring_rules.py::TestRanking::test_lower_penalty_wins_at_equal_solves",
       "outcome": "passed",
       "duration_s": 0.0,
       "markers": [
@@ -255,7 +236,7 @@
     {
       "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_compile_failure_short_circuits_everything",
       "outcome": "passed",
-      "duration_s": 0.001,
+      "duration_s": 0.0,
       "markers": [
         "unit"
       ],
@@ -294,7 +275,7 @@
     {
       "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_first_failure_by_ordinal_names_the_verdict[MEMORY_EXCEEDED-MEMORY_LIMIT_EXCEEDED]",
       "outcome": "passed",
-      "duration_s": 0.002,
+      "duration_s": 0.0,
       "markers": [
         "parametrize",
         "unit"
@@ -314,7 +295,7 @@
     {
       "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_ordinal_order_not_arrival_order_decides",
       "outcome": "passed",
-      "duration_s": 0.002,
+      "duration_s": 0.0,
       "markers": [
         "unit"
       ],
@@ -323,7 +304,7 @@
     {
       "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_partial_credit_is_weighted_and_never_reaches_full_marks",
       "outcome": "passed",
-      "duration_s": 0.003,
+      "duration_s": 0.001,
       "markers": [
         "unit"
       ],
@@ -341,7 +322,7 @@
     {
       "test": "tests/unit/test_verdict_and_compare.py::TestVerdictMapping::test_empty_suite_is_not_a_free_pass",
       "outcome": "passed",
-      "duration_s": 0.001,
+      "duration_s": 0.0,
       "markers": [
         "unit"
       ],
@@ -440,7 +421,7 @@
     {
       "test": "tests/unit/test_verdict_and_compare.py::TestClassification::test_peak_rss_near_the_limit_is_a_memory_limit",
       "outcome": "passed",
-      "duration_s": 0.001,
+      "duration_s": 0.0,
       "markers": [
         "unit"
       ],
@@ -456,5 +437,5 @@
       "execution_mode": "docker"
     }
   ],
-  "finished_at": "2026-11-17T11:59:59+0000"
+  "finished_at": "2026-11-18T10:02:41+0000"
 }

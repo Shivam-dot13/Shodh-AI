@@ -12,13 +12,13 @@ bash scripts/evaluate.sh
 ```
 
 It builds, brings the system up, runs four phases under the conditions each one needs, runs the
-end-to-end walkthrough, and writes labelled results into `evidence/`.
+end-to-end walkthrough, and writes labelled results into `evidence/`. 143 tests in total.
 
 | Phase          | Marker        | Conditions                      | Count |
 | -------------- | ------------- | ------------------------------- | ----- |
-| rules          | `unit`        | no database, no API             | 47    |
-| the system     | `integration` | real workers, configured mode   | 70    |
-| the sandbox    | `realrunner`  | `EXEC_MODE=docker` only         | 19    |
+| rules          | `unit`        | no database, no API             | 45    |
+| the system     | `integration` | real workers, configured mode   | 71    |
+| the sandbox    | `realrunner`  | needs a real Docker daemon      | 15    |
 | the protocol   | `concurrency` | **judge workers stopped**       | 12    |
 
 The concurrency phase stops the workers on purpose: those tests hold leases and report results
@@ -46,27 +46,27 @@ DURATION=120 CONCURRENCY=64 bash scripts/workload.sh  # heavier
 
 Three runs:
 
-1. **api-only** — judge workers stopped. Submissions are accepted and queued but nothing is
+1. **api-only.** Judge workers stopped. Submissions are accepted and queued but nothing is
    executed, so the latencies are the API and the database alone. This is how API overhead is
    measured separately from program execution.
-2. **end-to-end** — the same request mix with the workers running, so the API competes with
+2. **end-to-end.** The same request mix with the workers running, so the API competes with
    real container start-ups on the same host. Queue delay and program execution time are read
    from the stored records, not guessed from the client side.
-3. **bottleneck** — one larger dataset, the leaderboard served two ways, latency percentiles
+3. **bottleneck.** One larger dataset, the leaderboard served two ways, latency percentiles
    and a query plan for each, and a correctness check afterwards.
 
 ## Scenario family coverage
 
 | Family                      | Evidence                                                                                   |
 | --------------------------- | ------------------------------------------------------------------------------------------ |
-| Normal flow                 | `test_normal_flow.py` — join, submit, judge, score, rank; identifier returned before judging; counters agree with the leaderboard; at least two judge processes took part |
-| Retries and concurrency     | `test_idempotency.py` — eight overlapping requests on one key released by a barrier: exactly one creation, one attempt, one job; conflicting codes on one key; key scoped to actor and contest; replay survives contest close and still enforces auth |
-| Retries and concurrency     | `test_judge_protocol.py` — two workers claiming the same job behind a barrier; duplicate acks; fencing after reclaim; out-of-order completion; late result from a replaced attempt; bounded deliveries; results outside the pinned suite refused |
-| Recovery and rejudging      | `test_recovery.py` — a crash after commit still leaves a dispatchable job; a worker that dies before acknowledging yields exactly one verdict; a controllable runner failure is never a student verdict; nothing is left stuck |
-| Recovery and rejudging      | `test_rejudge.py` — explicit version pair; earlier attempts preserved; publishing a version does not rewrite history; a harder suite can lower the verdict; rejudge is audited |
-| Security and execution      | `test_authorization.py` — cross-organization denial (404 for every read and write), participant attempting thirteen organizer actions, another participant's work invisible, hidden data never served, credential planes separated |
-| Security and execution      | `test_isolation.py` — no network, read-only rootfs, non-root, no Docker socket, pids cap, wall clock, memory, output limits, no leftover containers, runner image recorded |
-| Performance and consistency | `bench/workload.py`, `bench/bottleneck.py`, `test_standings_consistency.py` — three independent leaderboard paths agree in both scoring modes, after rejudges and after judge failures; rebuilding a healthy contest changes nothing |
+| Normal flow                 | `test_normal_flow.py`, join, submit, judge, score, rank; identifier returned before judging; counters agree with the leaderboard; at least two judge processes took part |
+| Retries and concurrency     | `test_idempotency.py`, eight overlapping requests on one key released by a barrier: exactly one creation, one attempt, one job; conflicting codes on one key; key scoped to actor and contest; replay survives contest close and still enforces auth |
+| Retries and concurrency     | `test_judge_protocol.py`, two workers claiming the same job behind a barrier; duplicate acks; fencing after reclaim; out-of-order completion; late result from a replaced attempt; bounded deliveries; results outside the pinned suite refused |
+| Recovery and rejudging      | `test_recovery.py`, a crash after commit still leaves a dispatchable job; a worker that dies before acknowledging yields exactly one verdict; a controllable runner failure is never a student verdict; nothing is left stuck |
+| Recovery and rejudging      | `test_rejudge.py`, explicit version pair; earlier attempts preserved; publishing a version does not rewrite history; a harder suite can lower the verdict; rejudge is audited |
+| Security and execution      | `test_authorization.py`, cross-organization denial (404 for every read and write), participant attempting thirteen organizer actions, another participant's work invisible, hidden data never served, credential planes separated |
+| Security and execution      | `test_isolation.py`, no network, read-only rootfs, non-root, no Docker socket, pids cap, wall clock, memory, output limits, no leftover containers, runner image recorded |
+| Performance and consistency | `bench/workload.py`, `bench/bottleneck.py`, `test_standings_consistency.py`, three independent leaderboard paths agree in both scoring modes, after rejudges and after judge failures; rebuilding a healthy contest changes nothing |
 
 ## Coordinating races without sleeping
 
@@ -77,7 +77,7 @@ Three runs:
   past and calling `POST /internal/judge/reap`, which is deterministic. Waiting out a real
   30-second lease would turn a correctness test into a timing test.
 * **Armed failpoints.** `POST /dev/failpoints` arms a named fault. The switch is stored in the
-  database, so it applies to *every* API process — a fault only half the fleet obeys proves
+  database, so it applies to *every* API process, a fault only half the fleet obeys proves
   nothing. The test waits until the whole fleet reports it armed before relying on it.
 * **Source markers.** A seeded program can carry `SHODH_FAILPOINT:runner_unavailable` or
   `SHODH_FAILPOINT:runner_crash_in_container`, which makes the judge fail on purpose. Only those
@@ -100,7 +100,7 @@ Three runs:
 | `bottleneck-leaderboard.json`     | before/after latency, both query plans, and the correctness check    |
 
 Every one of those files records the commit, the configured execution mode, the data version
-and — for the test reports — whether the judge workers were running. No number in
+and, for the test reports, whether the judge workers were running. No number in
 [REPORT.md](../REPORT.md) is unattributable.
 
 ## Following one operation through the system
@@ -111,7 +111,7 @@ docker compose logs api worker | grep trace-me
 ```
 
 The request id is echoed on the response, stored on the submission, handed to the worker with
-the job and printed on every structured log line for the operation — through the API, the lease,
+the job and printed on every structured log line for the operation, through the API, the lease,
 the sandbox and the verdict. Logs are JSON, and a fixed set of field names
 (`authorization`, `token`, `password`, `source_code`, `expected_output`, `input_data`) is
 dropped defensively, so an added log line cannot leak a credential or a hidden test by accident.

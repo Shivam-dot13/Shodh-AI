@@ -218,7 +218,20 @@ def list_participants(
 # --------------------------------------------------------------------------- problems
 
 
+def _lock_problem(session: Session, problem: Problem) -> None:
+    """Serialise version numbering for one problem.
+
+    `max(version) + 1` read without a lock lets two concurrent organizers pick the same number;
+    the unique constraint then rejects one of them with a generic constraint error and the
+    organizer has to work out that a retry is what was needed. Locking the problem row first
+    makes the numbering correct instead of merely safe, and matches how `rejudge` numbers
+    attempts.
+    """
+    session.execute(select(Problem.id).where(Problem.id == problem.id).with_for_update()).one()
+
+
 def _create_suite(session: Session, problem: Problem, body: TestSuiteIn) -> TestSuite:
+    _lock_problem(session, problem)
     next_version = (
         session.execute(
             select(func.max(TestSuite.version)).where(TestSuite.problem_id == problem.id)
@@ -259,6 +272,7 @@ def _create_version(
         if suite is None or suite.problem_id != problem.id:
             raise ValidationError("test_suite_id does not belong to this problem")
 
+    _lock_problem(session, problem)
     next_version = (
         session.execute(
             select(func.max(ProblemVersion.version)).where(ProblemVersion.problem_id == problem.id)

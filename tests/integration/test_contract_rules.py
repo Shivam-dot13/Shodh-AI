@@ -216,7 +216,6 @@ class TestUnseenData:
                 "title": "First contest",
                 "starts_at": (now - dt.timedelta(minutes=1)).isoformat(),
                 "ends_at": (now + dt.timedelta(hours=2)).isoformat(),
-                "scoring_mode": "POINTS",
             },
         )
         assert contest.status_code == 201, contest.text
@@ -253,7 +252,6 @@ class TestUnseenData:
         assert judged["authoritative_attempt"]["score"] == 50
 
         board = organizer_client.get(f"/contests/{contest_id}/leaderboard").json()
-        assert board["scoring_mode"] == "POINTS"
         assert board["items"][0]["points"] == 50
 
 
@@ -312,3 +310,16 @@ class TestIdentityRoutes:
         )
         assert duplicate.status_code == 409
         assert duplicate.json()["error"]["code"] == "duplicate_email"
+
+
+def test_an_error_body_carries_the_generated_request_id(fresh_contest, clients, tokens):
+    """A client that sends no X-Request-Id must still be able to correlate its own failure."""
+    bundle = fresh_contest()
+    rohan = clients(tokens["rohan@acme.test"], "rohan")
+    response = rohan.get(f"/contests/{uuid.uuid4()}")
+    assert response.status_code == 404
+    generated = response.headers["X-Request-Id"]
+    assert generated, "the response must always carry a request id"
+    assert response.json()["error"]["request_id"] == generated, (
+        "the error body and the response header must name the same request"
+    )

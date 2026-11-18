@@ -270,26 +270,23 @@ async def run(args) -> dict:
         version = probe.get("/version").json()
 
     handle = pathlib.Path(args.dataset_file) if args.dataset_file else None
-    if handle is not None and handle.exists():
-        data = dataset_builder.Dataset.load(handle)
-        print(f"[workload] reusing dataset {handle}: {json.dumps(data.summary())}", flush=True)
-    else:
+    if handle is None or not handle.exists():
         print(
             f"[workload] building dataset: {args.participants} participants x {args.problems} problems",
             flush=True,
         )
-        data = dataset_builder.build(
-            participants=args.participants,
-            problems=args.problems,
-            submissions_per_cell=args.prefill,
-            scoring_mode=args.scoring_mode,
-            seed=args.seed,
-            label=args.label,
-        )
-        print(f"[workload] dataset ready: {json.dumps(data.summary())}", flush=True)
-        if handle is not None:
-            data.save(handle)
-            print(f"[workload] saved dataset handle to {handle}", flush=True)
+    data, reused = dataset_builder.load_or_build(
+        handle,
+        participants=args.participants,
+        problems=args.problems,
+        submissions_per_cell=args.prefill,
+        seed=args.seed,
+        label=args.label,
+    )
+    print(
+        f"[workload] dataset {'reused' if reused else 'ready'}: {json.dumps(data.summary())}",
+        flush=True,
+    )
     if args.build_only:
         return {"built_only": True, "dataset": data.summary()}
 
@@ -355,7 +352,6 @@ async def run(args) -> dict:
                 "GET /submissions": 0.1,
                 "GET /leaderboard": round(1 - args.submit_share - 0.2, 3),
             },
-            "scoring_mode": args.scoring_mode,
             "seed": args.seed,
             "drain_seconds": args.drain,
         },
@@ -401,7 +397,6 @@ def main() -> int:
     parser.add_argument("--problems", type=int, default=4)
     parser.add_argument("--prefill", type=int, default=3, help="judged submissions per (participant, problem)")
     parser.add_argument("--submit-share", type=float, default=0.3, dest="submit_share")
-    parser.add_argument("--scoring-mode", default="ICPC", choices=["ICPC", "POINTS"], dest="scoring_mode")
     parser.add_argument("--seed", type=int, default=20261117)
     parser.add_argument("--drain", type=float, default=0.0, help="seconds to wait for the queue to empty")
     parser.add_argument(

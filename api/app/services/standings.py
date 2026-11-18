@@ -1,13 +1,12 @@
-"""Leaderboard: one serving path, one deliberately naive path, one full rebuild.
+"""Leaderboard: the serving path, a deliberately naive path, and a full rebuild.
 
-* `serve`   reads the maintained problem_scores cells. This is what clients get.
-* `naive`   recomputes the same answer from submissions + judging_attempts on every request.
-            It is the pre-optimization serving path, kept so the Stage 4 bottleneck
-            investigation can compare query plans and latency on the same workload.
-* `rebuild` recomputes every cell in Python from authoritative attempts using the same pure
-            functions as the write path, then ranks. `verify` asserts serve == rebuild.
+serve     reads the maintained problem_scores cells. This is what clients get.
+naive     recomputes the same answer from submissions + judging_attempts on every request.
+          It is the pre-optimization serving path, kept so the Stage 4 bottleneck study can
+          compare query plans and latency on the same data.
+rebuild   recomputes every cell in Python with the same pure functions as the write path.
 
-All three must produce byte-identical ranking output; `tests/integration/test_standings_consistency.py`
+All three must produce identical ranking output. tests/integration/test_standings_consistency.py
 is what holds that claim up.
 """
 from __future__ import annotations
@@ -20,7 +19,7 @@ from datetime import datetime
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from ..domain.enums import AttemptState, ScoringMode, Verdict
+from ..domain.enums import AttemptState, Verdict
 from ..models import Contest
 from .scoring import (
     CellResult,
@@ -32,15 +31,9 @@ from .scoring import (
     score_cell,
 )
 
-# ORDER BY fragments are chosen from this table, never built from client input.
-_RANK_ORDER = {
-    ScoringMode.ICPC: "solved DESC, penalty_minutes ASC",
-    ScoringMode.POINTS: "points DESC",
-}
-_TOTAL_ORDER = {
-    ScoringMode.ICPC: "solved DESC, penalty_minutes ASC, last_solved_at ASC NULLS LAST, user_id ASC",
-    ScoringMode.POINTS: "points DESC, last_progress_at ASC NULLS LAST, user_id ASC",
-}
+# Only the score columns decide a tie; the rest fixes the order so paging is stable.
+_ORDER_RANK = "solved DESC, penalty_minutes ASC"
+_ORDER_TOTAL = "solved DESC, penalty_minutes ASC, last_solved_at ASC NULLS LAST, user_id ASC"
 
 _SERVE_AGG = """
 SELECT cp.user_id AS user_id,
@@ -57,13 +50,13 @@ WHERE cp.contest_id = :contest_id
 GROUP BY cp.user_id, u.display_name
 """
 
-# The naive path derives every cell on the fly: pick each submission latest COMPLETED attempt,
-# then fold the ICPC/POINTS rules into SQL. No problem_scores involved.
+# Derives every cell on the fly: pick each submission's latest COMPLETED attempt, then fold the
+# scoring rules into SQL. problem_scores is not involved.
 _NAIVE_AGG = """
 WITH judged AS (
     SELECT DISTINCT ON (s.id)
            s.id AS submission_id, s.user_id, s.problem_id, s.submitted_at,
-           a.id AS attempt_id, a.verdict, a.score, a.max_score
+           a.id AS attempt_id, a.verdict, a.max_score
     FROM submissions s
     JOIN judging_attempts a ON a.submission_id = s.id AND a.state = 'COMPLETED'
     WHERE s.contest_id = :contest_id
@@ -83,11 +76,7 @@ WITH judged AS (
            FIRST_VALUE(r.max_score) OVER (
                PARTITION BY r.user_id, r.problem_id
                ORDER BY (r.verdict = 'ACCEPTED') DESC, r.seq
-           ) AS ac_points,
-           MAX(r.score) OVER (PARTITION BY r.user_id, r.problem_id) AS best_points,
-           FIRST_VALUE(r.submitted_at) OVER (
-               PARTITION BY r.user_id, r.problem_id ORDER BY r.score DESC, r.seq
-           ) AS best_at
+           ) AS ac_points
     FROM ranked r
 ), cells AS (
     SELECT w.user_id,
@@ -95,8 +84,6 @@ WITH judged AS (
            BOOL_OR(w.verdict = 'ACCEPTED') AS solved,
            MIN(w.ac_at) AS solved_at,
            MAX(w.ac_points) AS ac_points,
-           MAX(w.best_points) AS best_points,
-           MIN(w.best_at) AS best_at,
            MAX(w.submitted_at) AS last_submitted_at,
            COUNT(*) FILTER (
                WHERE w.verdict <> 'ACCEPTED'
@@ -107,15 +94,14 @@ WITH judged AS (
 ), per_user AS (
     SELECT c.user_id,
            SUM(CASE WHEN c.solved THEN 1 ELSE 0 END) AS solved,
-           SUM(CASE WHEN :is_icpc THEN (CASE WHEN c.solved THEN c.ac_points ELSE 0 END)
-                    ELSE c.best_points END) AS points,
-           SUM(CASE WHEN :is_icpc AND c.solved
-                    THEN CAST(GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (c.solved_at - CAST(:starts_at AS timestamptz))) / 60)) AS int)
-                         + :penalty * c.rejected_before
+           SUM(CASE WHEN c.solved THEN c.ac_points ELSE 0 END) AS points,
+           SUM(CASE WHEN c.solved
+                    THEN CAST(GREATEST(0, FLOOR(
+                             EXTRACT(EPOCH FROM (c.solved_at - CAST(:starts_at AS timestamptz))) / 60
+                         )) AS int) + :penalty * c.rejected_before
                     ELSE 0 END) AS penalty_minutes,
            MAX(CASE WHEN c.solved THEN c.solved_at END) AS last_solved_at,
-           MAX(CASE WHEN :is_icpc THEN COALESCE(c.solved_at, c.last_submitted_at)
-                    ELSE c.best_at END) AS last_progress_at
+           MAX(COALESCE(c.solved_at, c.last_submitted_at)) AS last_progress_at
     FROM cells c
     GROUP BY c.user_id
 )
@@ -142,21 +128,31 @@ class StandingsPage:
     generated_at: datetime
 
 
-def _wrap_ranked(agg_sql: str, mode: ScoringMode) -> str:
+def _wrap_ranked(agg_sql: str) -> str:
     return f"""
 SELECT ranked.*, COUNT(*) OVER () AS total_rows FROM (
-  SELECT agg.*, RANK() OVER (ORDER BY {_RANK_ORDER[mode]}) AS rank
+  SELECT agg.*, RANK() OVER (ORDER BY {_ORDER_RANK}) AS rank
   FROM ({agg_sql}) agg
 ) ranked
-ORDER BY {_TOTAL_ORDER[mode]}
+ORDER BY {_ORDER_TOTAL}
 LIMIT :limit OFFSET :offset
 """
+
+
+def _naive_params(contest: Contest, limit: int, offset: int) -> dict:
+    return {
+        "contest_id": contest.id,
+        "limit": limit,
+        "offset": offset,
+        "starts_at": contest.starts_at,
+        "penalty": contest.penalty_minutes,
+    }
 
 
 def _rows_to_page(session: Session, contest: Contest, result, source: str) -> StandingsPage:
     records = result.mappings().all()
     user_ids = [r["user_id"] for r in records]
-    cells = _fetch_cells(session, contest, user_ids) if source != "rebuild" else {}
+    cells = _fetch_cells(session, contest, user_ids)
     rows = [
         StandingRow(
             rank=int(r["rank"]),
@@ -170,10 +166,9 @@ def _rows_to_page(session: Session, contest: Contest, result, source: str) -> St
         )
         for r in records
     ]
-    total = int(records[0]["total_rows"]) if records else 0
     return StandingsPage(
         rows=rows,
-        total=total,
+        total=int(records[0]["total_rows"]) if records else 0,
         standings_version=contest.standings_version,
         source=source,
         generated_at=datetime.now().astimezone(),
@@ -213,39 +208,26 @@ def _fetch_cells(
 
 def serve(session: Session, contest: Contest, *, limit: int = 50, offset: int = 0) -> StandingsPage:
     result = session.execute(
-        text(_wrap_ranked(_SERVE_AGG, contest.scoring_mode)),
+        text(_wrap_ranked(_SERVE_AGG)),
         {"contest_id": contest.id, "limit": limit, "offset": offset},
     )
     return _rows_to_page(session, contest, result, "standings")
 
 
 def naive(session: Session, contest: Contest, *, limit: int = 50, offset: int = 0) -> StandingsPage:
-    result = session.execute(
-        text(_wrap_ranked(_NAIVE_AGG, contest.scoring_mode)),
-        {
-            "contest_id": contest.id,
-            "limit": limit,
-            "offset": offset,
-            "starts_at": contest.starts_at,
-            "penalty": contest.penalty_minutes,
-            "is_icpc": contest.scoring_mode is ScoringMode.ICPC,
-        },
-    )
+    result = session.execute(text(_wrap_ranked(_NAIVE_AGG)), _naive_params(contest, limit, offset))
     return _rows_to_page(session, contest, result, "naive")
 
 
 def explain(session: Session, contest: Contest, source: str, *, limit: int = 50) -> str:
     """EXPLAIN (ANALYZE, BUFFERS) for either serving path, for the performance report."""
-    agg = _NAIVE_AGG if source == "naive" else _SERVE_AGG
-    params = {"contest_id": contest.id, "limit": limit, "offset": 0}
     if source == "naive":
-        params |= {
-            "starts_at": contest.starts_at,
-            "penalty": contest.penalty_minutes,
-            "is_icpc": contest.scoring_mode is ScoringMode.ICPC,
-        }
-    sql = "EXPLAIN (ANALYZE, BUFFERS, VERBOSE) " + _wrap_ranked(agg, contest.scoring_mode)
-    rows = session.execute(text(sql), params).scalars().all()
+        sql, params = _NAIVE_AGG, _naive_params(contest, limit, 0)
+    else:
+        sql, params = _SERVE_AGG, {"contest_id": contest.id, "limit": limit, "offset": 0}
+    rows = session.execute(
+        text("EXPLAIN (ANALYZE, BUFFERS, VERBOSE) " + _wrap_ranked(sql)), params
+    ).scalars().all()
     return "\n".join(rows)
 
 
@@ -299,22 +281,25 @@ def rebuild(session: Session, contest: Contest) -> StandingsPage:
         {"contest_id": contest.id},
     ).mappings().all()
 
-    totals: list[UserTotals] = []
-    for participant in participants:
-        user_id = participant["user_id"]
-        cells: dict[uuid.UUID, CellResult] = {}
-        for (cell_user, problem_id), rows in grouped.items():
-            if cell_user != user_id:
-                continue
-            cells[problem_id] = score_cell(
-                mode=contest.scoring_mode,
-                penalty_per_rejection=contest.penalty_minutes,
-                contest_start=contest.starts_at,
-                rows=rows,
-            )
-        totals.append(aggregate_user(user_id, cells, participant["display_name"]))
+    # Index the cells by user first; scanning every cell per participant would be
+    # participants x cells for no reason.
+    by_user: dict[uuid.UUID, dict[uuid.UUID, CellResult]] = defaultdict(dict)
+    for (cell_user, problem_id), rows in grouped.items():
+        by_user[cell_user][problem_id] = score_cell(
+            penalty_per_rejection=contest.penalty_minutes,
+            contest_start=contest.starts_at,
+            rows=rows,
+        )
 
-    rows = rank_users(contest.scoring_mode, totals)
+    totals = [
+        aggregate_user(
+            participant["user_id"],
+            by_user.get(participant["user_id"], {}),
+            participant["display_name"],
+        )
+        for participant in participants
+    ]
+    rows = rank_users(totals)
     return StandingsPage(
         rows=rows,
         total=len(rows),

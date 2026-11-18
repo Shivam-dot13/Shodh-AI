@@ -109,30 +109,6 @@
       "problem": "word-count",
       "language": "python3",
       "role": "accepted"
-    },
-    {
-      "file": "sum_two_accepted.cpp",
-      "problem": "sum-two",
-      "language": "cpp17",
-      "role": "accepted"
-    },
-    {
-      "file": "sum_two_wrong.cpp",
-      "problem": "sum-two",
-      "language": "cpp17",
-      "role": "wrong_output"
-    },
-    {
-      "file": "sum_two_compile_error.cpp",
-      "problem": "sum-two",
-      "language": "cpp17",
-      "role": "compile_error"
-    },
-    {
-      "file": "sum_two_runtime_error.cpp",
-      "problem": "sum-two",
-      "language": "cpp17",
-      "role": "runtime_failure"
     }
   ]
 }

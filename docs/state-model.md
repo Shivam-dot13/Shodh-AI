@@ -89,8 +89,8 @@ costs a participant a score they already earned.
 Everything about ordering follows from that one rule:
 
 * An `INFRA_FAILED` attempt is never authoritative, because it never completes.
-* A result that arrives late from an attempt a rejudge has already replaced does get stored —
-  history is preserved — but a higher `attempt_no` already completed, so the standings do not
+* A result that arrives late from an attempt a rejudge has already replaced does get stored,
+  history is preserved, but a higher `attempt_no` already completed, so the standings do not
   move. (`tests/integration/test_judge_protocol.py::test_a_late_result_from_a_replaced_attempt_does_not_move_the_standings`)
 * Results completing out of order land in the same final state, because the standings cell is
   recomputed from the stored set of attempts rather than adjusted by arrival.

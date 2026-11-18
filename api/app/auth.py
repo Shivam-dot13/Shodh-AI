@@ -1,18 +1,15 @@
-"""Authentication (a trusted development fixture) and authorization (the real thing).
+"""Authentication (a dev fixture) and authorization (not a fixture).
 
-Authentication is deliberately boring: static bearer tokens created by the seed, stored as
-SHA-256 digests. Swapping it for OIDC would touch only this module.
+Auth is static bearer tokens from the seed, stored as SHA-256 digests. Replacing it with OIDC
+would touch only this file.
 
-Authorization is not a fixture. Three planes exist and they do not overlap:
+Three scopes, no overlap:
+  user            participants and organizers, pinned to one organization
+  judge           the worker plane under /internal/judge/*, never minted for a person
+  platform_admin  bootstrap: create organizations and identities
 
-* scope "user"           -- participants and organizers, always pinned to one organization.
-* scope "judge"          -- the judge worker plane (/internal/judge/*). Cannot read any
-                            participant-facing route, cannot be minted for a human identity.
-* scope "platform_admin" -- bootstrap only: create organizations and identities.
-
-Tenant rule: a read of an object outside the caller organization answers 404, not 403, so
-knowing an id never confirms that it exists. A role violation inside the caller organization
-answers 403, because the object is legitimately visible to that tenant.
+Cross-tenant reads answer 404 rather than 403, so an id cannot be used to probe for existence.
+A wrong role inside your own organization answers 403.
 """
 from __future__ import annotations
 

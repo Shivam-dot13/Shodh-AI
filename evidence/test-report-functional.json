@@ -1,36 +1,35 @@
 {
   "label": "functional",
   "labels": {
-    "started_at": "2026-11-17T12:00:07+0000",
-    "commit": "2a046fe",
+    "started_at": "2026-11-18T10:02:48+0000",
+    "commit": "817bae6",
     "configured_execution_mode": "docker",
     "api_base_url": "http://api:8000",
     "workers_running": true,
     "markers_selected": "integration and not concurrency",
     "api_version": {
       "service": "api",
-      "commit": "2a046fe",
+      "commit": "817bae6",
       "execution_mode": "docker",
       "lease_seconds": 30,
       "max_deliveries": 3,
       "languages": {
-        "python3": "shodh-runner-python:1",
-        "cpp17": "shodh-runner-cpp:1"
+        "python3": "shodh-runner-python:1"
       },
       "failpoints_armed": []
     },
     "data_version": "seed-v1",
     "programs_version": "programs-v1",
-    "seeded_at": "2026-11-17T12:00:04.724457+00:00"
+    "seeded_at": "2026-11-18T10:02:45.879510+00:00"
   },
   "totals": {
-    "passed": 63
+    "passed": 71
   },
   "results": [
     {
       "test": "tests/integration/test_authorization.py::TestCrossOrganization::test_a_known_contest_id_is_invisible_from_another_organization",
       "outcome": "passed",
-      "duration_s": 0.294,
+      "duration_s": 0.112,
       "markers": [
         "integration"
       ],
@@ -39,7 +38,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestCrossOrganization::test_a_known_submission_id_is_invisible_from_another_organization",
       "outcome": "passed",
-      "duration_s": 0.218,
+      "duration_s": 0.148,
       "markers": [
         "integration"
       ],
@@ -48,7 +47,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestCrossOrganization::test_an_outsider_cannot_write_into_another_organization",
       "outcome": "passed",
-      "duration_s": 0.181,
+      "duration_s": 0.128,
       "markers": [
         "integration"
       ],
@@ -57,7 +56,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestCrossOrganization::test_an_outsider_cannot_read_another_organization_record",
       "outcome": "passed",
-      "duration_s": 0.016,
+      "duration_s": 0.022,
       "markers": [
         "integration"
       ],
@@ -66,7 +65,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestRoleBoundaries::test_a_participant_cannot_perform_organizer_actions",
       "outcome": "passed",
-      "duration_s": 0.315,
+      "duration_s": 0.4,
       "markers": [
         "integration"
       ],
@@ -75,7 +74,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestRoleBoundaries::test_an_organizer_cannot_submit",
       "outcome": "passed",
-      "duration_s": 0.362,
+      "duration_s": 0.172,
       "markers": [
         "integration"
       ],
@@ -84,7 +83,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestRoleBoundaries::test_a_participant_cannot_see_another_participant_work",
       "outcome": "passed",
-      "duration_s": 0.575,
+      "duration_s": 0.391,
       "markers": [
         "integration"
       ],
@@ -93,7 +92,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestRoleBoundaries::test_an_organizer_can_see_participant_work_in_its_own_organization",
       "outcome": "passed",
-      "duration_s": 26.106,
+      "duration_s": 2.186,
       "markers": [
         "integration"
       ],
@@ -102,7 +101,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestHiddenData::test_participants_never_receive_hidden_test_content",
       "outcome": "passed",
-      "duration_s": 0.993,
+      "duration_s": 1.835,
       "markers": [
         "integration"
       ],
@@ -111,7 +110,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestHiddenData::test_samples_are_published_but_hidden_cases_are_not",
       "outcome": "passed",
-      "duration_s": 0.165,
+      "duration_s": 0.16,
       "markers": [
         "integration"
       ],
@@ -120,7 +119,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestHiddenData::test_the_judge_payload_route_is_not_reachable_with_a_user_credential",
       "outcome": "passed",
-      "duration_s": 0.171,
+      "duration_s": 0.122,
       "markers": [
         "integration"
       ],
@@ -129,7 +128,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestCredentialPlanes::test_a_judge_credential_cannot_use_participant_or_organizer_routes",
       "outcome": "passed",
-      "duration_s": 0.154,
+      "duration_s": 0.109,
       "markers": [
         "integration"
       ],
@@ -138,7 +137,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestCredentialPlanes::test_a_user_credential_cannot_use_the_judge_plane",
       "outcome": "passed",
-      "duration_s": 0.198,
+      "duration_s": 0.232,
       "markers": [
         "integration"
       ],
@@ -147,7 +146,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestCredentialPlanes::test_an_organizer_credential_cannot_create_organizations",
       "outcome": "passed",
-      "duration_s": 0.155,
+      "duration_s": 0.164,
       "markers": [
         "integration"
       ],
@@ -156,7 +155,7 @@
     {
       "test": "tests/integration/test_authorization.py::TestCredentialPlanes::test_unauthenticated_and_bogus_credentials_are_rejected",
       "outcome": "passed",
-      "duration_s": 0.106,
+      "duration_s": 0.193,
       "markers": [
         "integration"
       ],
@@ -165,7 +164,7 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestFailureFamilies::test_malformed_request_is_a_validation_error",
       "outcome": "passed",
-      "duration_s": 0.086,
+      "duration_s": 0.138,
       "markers": [
         "integration"
       ],
@@ -174,7 +173,7 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestFailureFamilies::test_unsupported_language_is_a_validation_error",
       "outcome": "passed",
-      "duration_s": 0.074,
+      "duration_s": 0.111,
       "markers": [
         "integration"
       ],
@@ -183,7 +182,7 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestFailureFamilies::test_missing_idempotency_key_is_a_validation_error",
       "outcome": "passed",
-      "duration_s": 0.089,
+      "duration_s": 0.087,
       "markers": [
         "integration"
       ],
@@ -192,7 +191,7 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestFailureFamilies::test_header_and_body_key_must_agree",
       "outcome": "passed",
-      "duration_s": 0.098,
+      "duration_s": 0.082,
       "markers": [
         "integration"
       ],
@@ -201,7 +200,7 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestFailureFamilies::test_not_joined_is_a_business_rule_error",
       "outcome": "passed",
-      "duration_s": 0.076,
+      "duration_s": 0.077,
       "markers": [
         "integration"
       ],
@@ -210,7 +209,7 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestFailureFamilies::test_submitting_to_a_closed_contest_is_rejected",
       "outcome": "passed",
-      "duration_s": 0.16,
+      "duration_s": 0.176,
       "markers": [
         "integration"
       ],
@@ -219,7 +218,7 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestFailureFamilies::test_submitting_before_the_contest_opens_is_rejected",
       "outcome": "passed",
-      "duration_s": 0.03,
+      "duration_s": 0.068,
       "markers": [
         "integration"
       ],
@@ -228,7 +227,7 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestFailureFamilies::test_attempt_limit_is_a_business_rule_error",
       "outcome": "passed",
-      "duration_s": 0.105,
+      "duration_s": 0.122,
       "markers": [
         "integration"
       ],
@@ -237,7 +236,7 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestFailureFamilies::test_unknown_ids_are_not_found",
       "outcome": "passed",
-      "duration_s": 0.075,
+      "duration_s": 0.09,
       "markers": [
         "integration"
       ],
@@ -246,7 +245,7 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestFailureFamilies::test_every_error_carries_a_request_id_when_one_is_supplied",
       "outcome": "passed",
-      "duration_s": 0.126,
+      "duration_s": 0.127,
       "markers": [
         "integration"
       ],
@@ -255,7 +254,7 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestListContracts::test_listing_is_paginated_and_stable",
       "outcome": "passed",
-      "duration_s": 0.323,
+      "duration_s": 0.479,
       "markers": [
         "integration"
       ],
@@ -264,7 +263,7 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestListContracts::test_pagination_bounds_are_validated",
       "outcome": "passed",
-      "duration_s": 0.169,
+      "duration_s": 0.222,
       "markers": [
         "integration"
       ],
@@ -273,7 +272,7 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestListContracts::test_submission_filters_work_for_an_organizer",
       "outcome": "passed",
-      "duration_s": 0.153,
+      "duration_s": 0.382,
       "markers": [
         "integration"
       ],
@@ -282,7 +281,52 @@
     {
       "test": "tests/integration/test_contract_rules.py::TestUnseenData::test_a_brand_new_organization_can_run_a_contest_end_to_end",
       "outcome": "passed",
-      "duration_s": 2.741,
+      "duration_s": 4.333,
+      "markers": [
+        "integration"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/integration/test_contract_rules.py::TestIdentityRoutes::test_me_describes_each_credential_kind",
+      "outcome": "passed",
+      "duration_s": 0.069,
+      "markers": [
+        "integration"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/integration/test_contract_rules.py::TestIdentityRoutes::test_the_dev_token_fixture_mints_a_usable_token",
+      "outcome": "passed",
+      "duration_s": 0.073,
+      "markers": [
+        "integration"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/integration/test_contract_rules.py::TestIdentityRoutes::test_an_organization_is_readable_only_by_its_own_members",
+      "outcome": "passed",
+      "duration_s": 0.032,
+      "markers": [
+        "integration"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/integration/test_contract_rules.py::TestIdentityRoutes::test_an_organizer_can_create_an_identity_in_its_own_organization",
+      "outcome": "passed",
+      "duration_s": 0.077,
+      "markers": [
+        "integration"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/integration/test_contract_rules.py::test_an_error_body_carries_the_generated_request_id",
+      "outcome": "passed",
+      "duration_s": 0.175,
       "markers": [
         "integration"
       ],
@@ -291,7 +335,7 @@
     {
       "test": "tests/integration/test_idempotency.py::test_replay_returns_the_same_submission",
       "outcome": "passed",
-      "duration_s": 0.092,
+      "duration_s": 0.189,
       "markers": [
         "integration"
       ],
@@ -300,7 +344,7 @@
     {
       "test": "tests/integration/test_idempotency.py::test_replay_does_not_create_a_second_attempt_or_job",
       "outcome": "passed",
-      "duration_s": 1.009,
+      "duration_s": 1.93,
       "markers": [
         "integration"
       ],
@@ -309,7 +353,7 @@
     {
       "test": "tests/integration/test_idempotency.py::test_same_key_with_different_code_conflicts",
       "outcome": "passed",
-      "duration_s": 0.103,
+      "duration_s": 0.321,
       "markers": [
         "integration"
       ],
@@ -318,7 +362,7 @@
     {
       "test": "tests/integration/test_idempotency.py::test_same_key_with_a_different_language_or_problem_conflicts",
       "outcome": "passed",
-      "duration_s": 0.125,
+      "duration_s": 0.573,
       "markers": [
         "integration"
       ],
@@ -327,7 +371,7 @@
     {
       "test": "tests/integration/test_idempotency.py::test_a_key_is_scoped_to_the_actor",
       "outcome": "passed",
-      "duration_s": 0.149,
+      "duration_s": 0.44,
       "markers": [
         "integration"
       ],
@@ -336,7 +380,7 @@
     {
       "test": "tests/integration/test_idempotency.py::test_a_key_is_scoped_to_the_contest",
       "outcome": "passed",
-      "duration_s": 0.347,
+      "duration_s": 0.683,
       "markers": [
         "integration"
       ],
@@ -345,7 +389,7 @@
     {
       "test": "tests/integration/test_idempotency.py::test_replay_still_enforces_authentication_and_tenancy",
       "outcome": "passed",
-      "duration_s": 0.161,
+      "duration_s": 0.411,
       "markers": [
         "integration"
       ],
@@ -354,7 +398,7 @@
     {
       "test": "tests/integration/test_idempotency.py::test_replay_works_after_the_contest_closes",
       "outcome": "passed",
-      "duration_s": 0.195,
+      "duration_s": 0.527,
       "markers": [
         "integration"
       ],
@@ -363,7 +407,7 @@
     {
       "test": "tests/integration/test_idempotency.py::test_simultaneous_use_of_one_key_creates_exactly_one_submission",
       "outcome": "passed",
-      "duration_s": 2.533,
+      "duration_s": 3.587,
       "markers": [
         "integration"
       ],
@@ -372,7 +416,7 @@
     {
       "test": "tests/integration/test_idempotency.py::test_simultaneous_conflicting_keys_resolve_to_one_winner_and_conflicts",
       "outcome": "passed",
-      "duration_s": 0.125,
+      "duration_s": 0.1,
       "markers": [
         "integration"
       ],
@@ -381,7 +425,7 @@
     {
       "test": "tests/integration/test_normal_flow.py::test_submission_returns_an_identifier_before_judging_finishes",
       "outcome": "passed",
-      "duration_s": 1.174,
+      "duration_s": 1.441,
       "markers": [
         "integration"
       ],
@@ -390,7 +434,7 @@
     {
       "test": "tests/integration/test_normal_flow.py::test_accepted_submission_scores_and_ranks",
       "outcome": "passed",
-      "duration_s": 1.201,
+      "duration_s": 1.443,
       "markers": [
         "integration"
       ],
@@ -399,7 +443,7 @@
     {
       "test": "tests/integration/test_normal_flow.py::test_per_test_results_are_visible_without_leaking_hidden_data",
       "outcome": "passed",
-      "duration_s": 0.962,
+      "duration_s": 1.173,
       "markers": [
         "integration"
       ],
@@ -408,7 +452,7 @@
     {
       "test": "tests/integration/test_normal_flow.py::test_rejected_attempt_adds_penalty_only_after_a_solve",
       "outcome": "passed",
-      "duration_s": 2.251,
+      "duration_s": 2.803,
       "markers": [
         "integration"
       ],
@@ -417,7 +461,7 @@
     {
       "test": "tests/integration/test_normal_flow.py::test_standings_version_advances_with_every_verdict",
       "outcome": "passed",
-      "duration_s": 0.959,
+      "duration_s": 1.936,
       "markers": [
         "integration"
       ],
@@ -426,7 +470,7 @@
     {
       "test": "tests/integration/test_normal_flow.py::test_several_worker_processes_share_the_queue",
       "outcome": "passed",
-      "duration_s": 2.431,
+      "duration_s": 4.466,
       "markers": [
         "integration"
       ],
@@ -435,7 +479,7 @@
     {
       "test": "tests/integration/test_normal_flow.py::test_contest_counters_agree_with_the_leaderboard",
       "outcome": "passed",
-      "duration_s": 0.952,
+      "duration_s": 2.156,
       "markers": [
         "integration"
       ],
@@ -444,7 +488,7 @@
     {
       "test": "tests/integration/test_recovery.py::test_a_crash_after_commit_still_leaves_a_dispatchable_job",
       "outcome": "passed",
-      "duration_s": 1.519,
+      "duration_s": 2.406,
       "markers": [
         "integration"
       ],
@@ -453,7 +497,7 @@
     {
       "test": "tests/integration/test_recovery.py::test_a_controllable_runner_failure_is_never_a_student_verdict",
       "outcome": "passed",
-      "duration_s": 6.606,
+      "duration_s": 6.725,
       "markers": [
         "integration"
       ],
@@ -462,7 +506,7 @@
     {
       "test": "tests/integration/test_recovery.py::test_a_sandbox_crash_is_an_infrastructure_failure",
       "outcome": "passed",
-      "duration_s": 8.115,
+      "duration_s": 8.082,
       "markers": [
         "integration"
       ],
@@ -471,7 +515,7 @@
     {
       "test": "tests/integration/test_recovery.py::test_the_queue_drains_to_nothing",
       "outcome": "passed",
-      "duration_s": 1.506,
+      "duration_s": 1.829,
       "markers": [
         "integration"
       ],
@@ -480,7 +524,7 @@
     {
       "test": "tests/integration/test_rejudge.py::test_rejudge_adds_an_attempt_and_keeps_the_old_one",
       "outcome": "passed",
-      "duration_s": 2.264,
+      "duration_s": 2.333,
       "markers": [
         "integration"
       ],
@@ -489,7 +533,7 @@
     {
       "test": "tests/integration/test_rejudge.py::test_publishing_a_new_version_does_not_change_a_historical_verdict",
       "outcome": "passed",
-      "duration_s": 0.996,
+      "duration_s": 1.27,
       "markers": [
         "integration"
       ],
@@ -498,7 +542,7 @@
     {
       "test": "tests/integration/test_rejudge.py::test_rejudging_against_a_harder_suite_can_lower_the_verdict",
       "outcome": "passed",
-      "duration_s": 2.02,
+      "duration_s": 2.381,
       "markers": [
         "integration"
       ],
@@ -507,7 +551,7 @@
     {
       "test": "tests/integration/test_rejudge.py::test_rejudge_can_reuse_an_older_version_pair",
       "outcome": "passed",
-      "duration_s": 2.905,
+      "duration_s": 3.393,
       "markers": [
         "integration"
       ],
@@ -516,7 +560,7 @@
     {
       "test": "tests/integration/test_rejudge.py::test_rejudge_rejects_a_pair_from_another_problem",
       "outcome": "passed",
-      "duration_s": 0.167,
+      "duration_s": 0.154,
       "markers": [
         "integration"
       ],
@@ -525,36 +569,34 @@
     {
       "test": "tests/integration/test_rejudge.py::test_rejudge_is_audited",
       "outcome": "passed",
-      "duration_s": 1.21,
+      "duration_s": 1.424,
       "markers": [
         "integration"
       ],
       "execution_mode": "docker"
     },
     {
-      "test": "tests/integration/test_standings_consistency.py::test_all_three_paths_agree[ICPC]",
+      "test": "tests/integration/test_rejudge.py::test_concurrent_version_publishes_get_distinct_numbers",
       "outcome": "passed",
-      "duration_s": 2.333,
+      "duration_s": 0.159,
       "markers": [
-        "integration",
-        "parametrize"
+        "integration"
       ],
       "execution_mode": "docker"
     },
     {
-      "test": "tests/integration/test_standings_consistency.py::test_all_three_paths_agree[POINTS]",
+      "test": "tests/integration/test_standings_consistency.py::test_all_three_paths_agree",
       "outcome": "passed",
-      "duration_s": 2.478,
+      "duration_s": 3.344,
       "markers": [
-        "integration",
-        "parametrize"
+        "integration"
       ],
       "execution_mode": "docker"
     },
     {
       "test": "tests/integration/test_standings_consistency.py::test_rebuilding_a_healthy_contest_changes_nothing",
       "outcome": "passed",
-      "duration_s": 2.594,
+      "duration_s": 2.826,
       "markers": [
         "integration"
       ],
@@ -563,7 +605,7 @@
     {
       "test": "tests/integration/test_standings_consistency.py::test_paths_still_agree_after_a_rejudge",
       "outcome": "passed",
-      "duration_s": 3.542,
+      "duration_s": 3.81,
       "markers": [
         "integration"
       ],
@@ -572,7 +614,7 @@
     {
       "test": "tests/integration/test_standings_consistency.py::test_a_judge_failure_does_not_move_the_standings",
       "outcome": "passed",
-      "duration_s": 7.73,
+      "duration_s": 7.523,
       "markers": [
         "integration"
       ],
@@ -581,7 +623,7 @@
     {
       "test": "tests/integration/test_standings_consistency.py::test_leaderboard_pages_are_consistent_with_the_whole_list",
       "outcome": "passed",
-      "duration_s": 2.538,
+      "duration_s": 3.155,
       "markers": [
         "integration"
       ],
@@ -590,12 +632,39 @@
     {
       "test": "tests/integration/test_standings_consistency.py::test_query_plans_are_available_for_both_paths",
       "outcome": "passed",
-      "duration_s": 2.773,
+      "duration_s": 2.751,
+      "markers": [
+        "integration"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/integration/test_standings_consistency.py::test_an_etag_identifies_the_page_not_just_the_contest",
+      "outcome": "passed",
+      "duration_s": 2.815,
+      "markers": [
+        "integration"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/integration/test_standings_consistency.py::test_a_new_verdict_invalidates_a_cached_page",
+      "outcome": "passed",
+      "duration_s": 1.193,
+      "markers": [
+        "integration"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/integration/test_standings_consistency.py::test_the_expensive_derivation_paths_are_organizer_only",
+      "outcome": "passed",
+      "duration_s": 0.092,
       "markers": [
         "integration"
       ],
       "execution_mode": "docker"
     }
   ],
-  "finished_at": "2026-11-17T12:01:50+0000"
+  "finished_at": "2026-11-18T10:04:25+0000"
 }

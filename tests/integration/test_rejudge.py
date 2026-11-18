@@ -196,70 +196,39 @@ def test_rejudge_is_audited(fresh_contest, programs, db):
     assert row["detail"]["attempt_no"] == 2
 
 
-def test_bulk_rejudge_queues_one_attempt_per_submission(fresh_contest, programs, db):
-    """The organizer-facing bulk path: every submission of a problem, one chosen version pair."""
+def test_concurrent_version_publishes_get_distinct_numbers(fresh_contest):
+    """Two organizers publishing at once must not collide on a version number."""
+    import threading
+
     bundle = fresh_contest()
-    rohan = bundle["participants"]["rohan@acme.test"]
-    meera = bundle["participants"]["meera@acme.test"]
-    submissions = [
-        submit(rohan, bundle["contest_id"], bundle["problem_id"], programs("accepted")).json(),
-        submit(rohan, bundle["contest_id"], bundle["problem_id"], programs("wrong_output")).json(),
-        submit(meera, bundle["contest_id"], bundle["problem_id"], programs("partial_output")).json(),
-    ]
-    for client, submission in zip((rohan, rohan, meera), submissions):
-        wait_for_terminal(client, submission["id"])
+    barrier = threading.Barrier(4)
+    results: list = [None] * 4
 
-    version_two = publish_version(bundle, max_points=150, publish=True)
-    response = bundle["organizer"].post(
-        f"/problems/{bundle['problem_id']}/rejudge",
-        json={
-            "problem_version_id": version_two["id"],
-            "test_suite_id": version_two["default_test_suite_id"],
-        },
-    )
-    assert response.status_code == 202, response.text
-    body = response.json()
-    assert body["submissions_matched"] == body["attempts_queued"] == 3
+    def publish(index: int) -> None:
+        barrier.wait(timeout=30)
+        results[index] = bundle["organizer"].post(
+            f"/problems/{bundle['problem_id']}/versions",
+            json={
+                "statement": f"concurrent {index}",
+                "max_points": 100,
+                "publish": False,
+                "test_suite": {
+                    "label": f"concurrent {index}",
+                    "cases": [{"ordinal": 1, "input": "2 3\n", "expected_output": "5\n", "is_sample": True}],
+                },
+            },
+        )
 
-    for client, submission in zip((rohan, rohan, meera), submissions):
-        final = wait_for_terminal(client, submission["id"])
-        stored = attempt_rows(db, submission["id"])
-        assert [row["attempt_no"] for row in stored] == [1, 2]
-        assert str(stored[1]["problem_version_id"]) == version_two["id"]
-        assert final["authoritative_attempt"]["attempt_no"] == 2
+    threads = [threading.Thread(target=publish, args=(i,)) for i in range(4)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join(timeout=60)
 
-    report = bundle["organizer"].get(f"/contests/{bundle['contest_id']}/standings/verify").json()
-    assert report["serving_matches_rebuild"] is True
-    assert report["serving_matches_naive"] is True
+    statuses = [r.status_code for r in results]
+    assert statuses == [201] * 4, f"every publish should succeed, got {statuses}"
+    versions = sorted(r.json()["version"] for r in results)
+    assert versions == [2, 3, 4, 5], f"version numbers must be distinct and contiguous: {versions}"
 
-
-def test_bulk_rejudge_can_be_restricted_to_one_participant(fresh_contest, programs, db):
-    bundle = fresh_contest()
-    rohan = bundle["participants"]["rohan@acme.test"]
-    meera = bundle["participants"]["meera@acme.test"]
-    mine = submit(rohan, bundle["contest_id"], bundle["problem_id"], programs("accepted")).json()
-    theirs = submit(meera, bundle["contest_id"], bundle["problem_id"], programs("accepted")).json()
-    wait_for_terminal(rohan, mine["id"])
-    wait_for_terminal(meera, theirs["id"])
-
-    response = bundle["organizer"].post(
-        f"/problems/{bundle['problem_id']}/rejudge"
-        f"?user_id={bundle['user_ids']['rohan@acme.test']}",
-        json={"problem_version_id": bundle["version_id"], "test_suite_id": bundle["suite_id"]},
-    )
-    assert response.status_code == 202
-    assert response.json()["attempts_queued"] == 1
-    assert len(attempt_rows(db, mine["id"])) == 2
-    assert len(attempt_rows(db, theirs["id"])) == 1
-
-
-def test_bulk_rejudge_is_organizer_only_and_tenant_scoped(fresh_contest, programs, manifest, clients):
-    bundle = fresh_contest()
-    rohan = bundle["participants"]["rohan@acme.test"]
-    outsider = clients(
-        manifest["organizations"]["borealis-institute"]["users"]["organizer@borealis.test"]["token"],
-        "borealis organizer",
-    )
-    body = {"problem_version_id": bundle["version_id"], "test_suite_id": bundle["suite_id"]}
-    assert rohan.post(f"/problems/{bundle['problem_id']}/rejudge", json=body).status_code == 403
-    assert outsider.post(f"/problems/{bundle['problem_id']}/rejudge", json=body).status_code == 404
+    listed = bundle["organizer"].get(f"/problems/{bundle['problem_id']}/versions").json()["items"]
+    assert sorted(v["version"] for v in listed) == [1, 2, 3, 4, 5]

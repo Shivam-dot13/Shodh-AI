@@ -1402,7 +1402,7 @@
           "leaderboard"
         ],
         "summary": "Standings, with a selectable computation path",
-        "description": "How clients observe updates\n\nThe response carries `standings_version`, a counter bumped inside the transaction that\nstores a verdict, and an `ETag` of that counter. A client polls and compares; a 304 means\nnothing has changed. There is no asynchronous refresh anywhere in the write path, so a\nsuccessful read is never behind a verdict that has already been stored.\n\n`source` selects the computation path and exists for evidence, not for tuning:\n  standings  the maintained problem_scores cells (what everyone gets by default)\n  naive      recompute from submissions and attempts on every request (pre-optimization)\n  rebuild    full recompute in Python from authoritative records\nAll three must return the same ranking; /standings/verify asserts it.",
+        "description": "How clients observe updates\n\nThe response carries `standings_version`, a counter bumped inside the transaction that\nstores a verdict, and an `ETag` identifying this representation: the version together with\nthe source, limit and offset, so paging with `If-None-Match` cannot be answered with a page\nthe client has never seen. A 304 means this exact page is unchanged. There is no\nasynchronous refresh anywhere in the write path, so a successful read is never behind a\nverdict that has already been stored.\n\n`source` selects the computation path and exists for evidence, not for tuning:\n  standings  the maintained problem_scores cells (what everyone gets by default)\n  naive      recompute from submissions and attempts on every request (pre-optimization)\n  rebuild    full recompute in Python from authoritative records\nAll three must return the same ranking; /standings/verify asserts it. The two re-deriving\npaths are organizer-only, because they cost far more than the serving path.",
         "operationId": "leaderboard_contests__contest_id__leaderboard_get",
         "parameters": [
           {
@@ -2678,8 +2678,7 @@
       "Language": {
         "type": "string",
         "enum": [
-          "python3",
-          "cpp17"
+          "python3"
         ],
         "title": "Language"
       },
@@ -2804,6 +2803,18 @@
             "minimum": 1.0,
             "title": "Capacity",
             "default": 1
+          },
+          "contest_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contest Id"
           }
         },
         "type": "object",
@@ -3577,8 +3588,7 @@
       "ScoringMode": {
         "type": "string",
         "enum": [
-          "ICPC",
-          "POINTS"
+          "ICPC"
         ],
         "title": "ScoringMode"
       },

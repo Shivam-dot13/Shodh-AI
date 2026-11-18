@@ -1,24 +1,15 @@
-"""The two execution modes, and what each one actually guarantees.
+"""Running a submission in a container, and what that does and does not guarantee.
 
-docker  One sibling container per attempt, created through the daemon socket the *worker*
-        holds. The container has no network, a read-only root filesystem, /box as a small
-        tmpfs, a non-root user (65534), all capabilities dropped, no-new-privileges, and
-        bounded memory, swap, CPU, process count, file size and wall clock. No host path is
-        mounted into it and the Docker socket is never passed through, so submitted code
-        cannot reach the control plane that started it. The container is removed in a finally
-        block, and a reaper removes strays left by a worker that was killed.
+One sibling container per attempt, created through the daemon socket the *worker* holds. The
+container has no network, a read-only root filesystem, /box as a small tmpfs, a non-root user
+(65534), all capabilities dropped, no-new-privileges, and bounded memory, swap, CPU, process
+count, file size and wall clock. No host path is mounted into it and the Docker socket is never
+passed through, so submitted code cannot reach the control plane that started it. The container
+is removed in a finally block, and a reaper clears strays left by a worker that was killed.
 
-local   The same harness, same limits, run as a subprocess of the worker. There is no
-        container boundary: it exists so concurrency and recovery tests can run fast and
-        deterministically, and every result it produces is labelled local. Only python3 is
-        available in this mode - the worker image carries no C++ toolchain - and a language
-        whose toolchain is missing is reported as an infrastructure failure, never as a
-        compile error against the author.
-
-Isolation limits worth stating plainly: this is Docker, not a microVM. A kernel escape, a
-side channel between containers on the same host, or clock and /proc visibility are not
-addressed. Seccomp is the Docker default profile; user namespaces are whatever the host
-daemon is configured with. Those are the boundaries a reviewer should assume.
+This is Docker, not a microVM. A kernel escape, a side channel between
+containers on the same host, or clock and /proc visibility are not addressed. Seccomp is the
+Docker default profile. Those are the boundaries a reviewer should assume.
 """
 from __future__ import annotations
 
@@ -26,9 +17,6 @@ import base64
 import json
 import logging
 import os
-import shutil
-import subprocess
-import tempfile
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -42,8 +30,8 @@ RUNNER_CONTEXT = os.environ.get("RUNNER_CONTEXT", "/srv/runner-images")
 SENTINEL = "###SHODH_RESULT###"
 LABEL = "shodh.judge"
 
-SOURCE_FILENAME = {"python3": "submission.py", "cpp17": "submission.cpp"}
-DOCKERFILE_FOR = {"python3": "python/Dockerfile", "cpp17": "cpp/Dockerfile"}
+SOURCE_FILENAME = {"python3": "submission.py"}
+DOCKERFILE_FOR = {"python3": "python/Dockerfile"}
 
 
 class RunnerUnavailable(RuntimeError):
@@ -66,7 +54,7 @@ class JudgeOutcome:
     compile_ok: bool
     compile_message: str
     observations: list[Observation] = field(default_factory=list)
-    exec_mode: str = "local"
+    exec_mode: str = "docker"
     runner_image: str | None = None
     wall_ms: int = 0
 
@@ -155,43 +143,6 @@ def _wall_budget_seconds(job: dict) -> float:
     config = job["runtime_config"]
     per_test = config["time_limit_ms"] / 1000.0 + 0.6
     return 25.0 + per_test * max(1, len(job["test_cases"]))
-
-
-# --------------------------------------------------------------------------- local
-
-
-class LocalRunner:
-    mode = "local"
-
-    def run(self, job: dict) -> JudgeOutcome:
-        box = tempfile.mkdtemp(prefix="shodh-box-")
-        started = time.monotonic()
-        try:
-            done = subprocess.run(
-                ["python3", "-u", HARNESS_PATH],
-                input=_job_blob(job).decode("ascii"),
-                capture_output=True,
-                text=True,
-                timeout=_wall_budget_seconds(job),
-                env=dict(os.environ, SHODH_BOX=box),
-                cwd=box,
-            )
-            if done.returncode not in (0, 17, 18, 19, 20) and SENTINEL not in done.stdout:
-                raise RunnerUnavailable(f"harness exited {done.returncode}: {done.stderr[-400:]}")
-            result = _parse_result(done.stdout)
-            return _outcome_from_result(
-                result,
-                exec_mode=self.mode,
-                image=None,
-                wall_ms=int((time.monotonic() - started) * 1000),
-            )
-        except subprocess.TimeoutExpired as exc:
-            raise RunnerUnavailable("local runner exceeded its wall budget") from exc
-        finally:
-            shutil.rmtree(box, ignore_errors=True)
-
-
-# --------------------------------------------------------------------------- docker
 
 
 class DockerRunner:
@@ -340,8 +291,6 @@ class DockerRunner:
 
 
 def build_runner(mode: str):
-    if mode == "docker":
-        return DockerRunner()
-    if mode == "local":
-        return LocalRunner()
-    raise RunnerUnavailable(f"unknown execution mode {mode}")
+    if mode != "docker":
+        raise RunnerUnavailable(f"unknown execution mode {mode}")
+    return DockerRunner()

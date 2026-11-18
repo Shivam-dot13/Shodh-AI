@@ -111,6 +111,8 @@ class TestRoleBoundaries:
             ),
             "amend the contest": rohan.patch(f"/contests/{bundle['contest_id']}", json={"title": "mine now"}),
             "rebuild standings": rohan.post(f"/contests/{bundle['contest_id']}/standings/rebuild"),
+            "naive leaderboard": rohan.get(f"/contests/{bundle['contest_id']}/leaderboard?source=naive"),
+            "rebuild leaderboard": rohan.get(f"/contests/{bundle['contest_id']}/leaderboard?source=rebuild"),
             "verify standings": rohan.get(f"/contests/{bundle['contest_id']}/standings/verify"),
             "read query plans": rohan.get(f"/contests/{bundle['contest_id']}/standings/explain"),
             "read queue depth": rohan.get("/ops/queue"),

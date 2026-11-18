@@ -2,7 +2,7 @@
 
 The same key and an equivalent request from the same actor in the same contest must return the
 same logical submission; the same key with different code must conflict. Coordinated with a
-barrier so the requests really do overlap, not merely follow one another.
+barrier so the requests really do overlap, not follow one another.
 """
 from __future__ import annotations
 
@@ -92,16 +92,30 @@ def test_same_key_with_a_different_language_or_problem_conflicts(fresh_contest, 
     rohan = bundle["participants"]["rohan@acme.test"]
     key = f"conflict-{uuid.uuid4().hex}"
     submit(rohan, bundle["contest_id"], bundle["problem_id"], programs("accepted"), idempotency_key=key)
-    other_language = submit(
+    second = bundle["organizer"].post(
+        f"/contests/{bundle['contest_id']}/problems",
+        json={
+            "slug": "sum-two-again",
+            "title": "Sum, again",
+            "ordinal": 2,
+            "version": {
+                "max_points": 100,
+                "test_suite": {
+                    "cases": [{"ordinal": 1, "input": "2 3\n", "expected_output": "5\n", "is_sample": True}]
+                },
+            },
+        },
+    )
+    assert second.status_code == 201, second.text
+    other_problem = submit(
         rohan,
         bundle["contest_id"],
-        bundle["problem_id"],
-        programs("accepted", "cpp17"),
-        language="cpp17",
+        second.json()["id"],
+        programs("accepted"),
         idempotency_key=key,
         expect=(),
     )
-    assert other_language.status_code == 409
+    assert other_problem.status_code == 409
 
 
 def test_a_key_is_scoped_to_the_actor(fresh_contest, programs):

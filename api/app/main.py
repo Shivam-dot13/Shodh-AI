@@ -18,7 +18,7 @@ from .config import get_settings
 from .db import SessionLocal
 from .domain import failpoints
 from .domain.errors import AppError, InfrastructureError, ValidationError
-from .logging_setup import bind, clear, setup_logging
+from .logging_setup import bind, clear, current_request_id, setup_logging
 from .routers import contests, identities, judge, leaderboard, meta, submissions
 from .services.judge_queue import reap_expired
 
@@ -143,9 +143,11 @@ async def correlate(request: Request, call_next):
 
 
 def _error_response(exc: AppError, request: Request) -> JSONResponse:
-    request_id = request.headers.get("x-request-id") or getattr(request.state, "request_id", None)
-    body = exc.body(request_id)
-    return JSONResponse(status_code=exc.status_code, content=body)
+    # The generated id lives in the logging context, not on request.state; without this fallback
+    # an error raised by a client that sent no X-Request-Id would carry request_id: null in the
+    # body while the response header carried the real one, and the two would not match.
+    request_id = request.headers.get("x-request-id") or current_request_id()
+    return JSONResponse(status_code=exc.status_code, content=exc.body(request_id))
 
 
 @app.exception_handler(AppError)

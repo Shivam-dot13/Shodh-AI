@@ -101,7 +101,6 @@ a late result from a replaced attempt is stored as history without moving the st
 | [docs/scoring.md](docs/scoring.md)                            | scoring, penalties, tie-breaking, eligibility     |
 | [docs/authorization.md](docs/authorization.md)                | scopes, roles, tenancy, hidden data, error shape  |
 | [docs/state-model.md](docs/state-model.md)                    | submission and attempt states, verdicts, queue states |
-| [docs/transactions.md](docs/transactions.md)                  | every write path, its boundary and the constraint behind each invariant |
 | [docs/execution-and-isolation.md](docs/execution-and-isolation.md) | the sandbox, and its limits stated plainly   |
 | [docs/verification.md](docs/verification.md)                  | what is tested, how to run it, how to read the evidence |
 | [AI_ASSISTANCE.md](AI_ASSISTANCE.md)                          | where AI was used and how each part was verified  |
@@ -151,7 +150,7 @@ Seeded identities (tokens are fixtures; they are stored hashed):
 | —                   | judge worker plane         | service     | `shodh_judge_dev_token`         |
 | —                   | platform bootstrap         | service     | `shodh_platform_admin_dev_token`|
 
-Contests: `autumn-open` (Acme, ICPC, open), `winter-sprint` (Borealis, POINTS, open),
+Contests: `autumn-open` (Acme, ICPC, open), `winter-sprint` (Borealis, ICPC, open),
 `spring-archive` (Acme, closed, two-attempt cap). Problems: `sum-two`, `max-in-list`,
 `word-count`. The seed is deterministic — identifiers are `uuid5` of stable names, so a reseed
 produces the same ids — and it writes `evidence/seed-manifest.json`, which the tests, the demo
@@ -170,9 +169,9 @@ bash scripts/evaluate.sh
 
 | Phase            | Condition                                        | Asserts                                            |
 | ---------------- | ------------------------------------------------ | -------------------------------------------------- |
-| `unit` (47)      | no database, no API                              | scoring, verdict mapping, comparison, state model  |
-| `functional` (70)| the running system, real workers                 | the normal flow, contracts, identities, authorization, idempotency, rejudge, standings consistency, recovery |
-| `realrunner` (19)| `EXEC_MODE=docker` only                          | network, rootfs, uid, socket, pids, CPU, memory, output limits, cleanup, both languages |
+| `unit` (45)      | no database, no API                              | scoring, verdict mapping, comparison, state model  |
+| `functional` (71)| the running system, real workers                 | the normal flow, contracts, identities, authorization, idempotency, rejudge, standings consistency, recovery |
+| `realrunner` (15)| needs a real Docker daemon                       | network, rootfs, uid, socket, pids, CPU, memory, output limits, cleanup, compile errors |
 | `concurrency` (12)| workers stopped; the tests are the only judge   | competing claims, fencing, duplicate acks, out-of-order completion, bounded retries, late replaced results, contest-scoped claims |
 
 Results land in `evidence/` as JSON, each labelled with the commit, the configured execution
@@ -194,13 +193,14 @@ Defaults work; `.env.example` lists everything.
 
 | Variable                                   | Default  | Meaning                                              |
 | ------------------------------------------ | -------- | ---------------------------------------------------- |
-| `EXEC_MODE`                                | `docker` | `docker` (real isolation) or `local` (no container)  |
+| `EXEC_MODE`                                | `docker` | recorded on every attempt and in every result file   |
 | `API_WORKERS` / `WORKER_REPLICAS`          | `2` / `2`| API processes and judge workers                      |
 | `JUDGE_CONCURRENCY`                        | `2`      | attempts judged at once per worker                   |
 | `LEASE_SECONDS` / `MAX_DELIVERIES`         | `30` / `3`| lease length and delivery budget                    |
 | `DEV_AUTH_ENABLED`                         | `true`   | the token fixture and the failpoint routes           |
 | `WORKER_FAILPOINTS`                        | unset    | e.g. `crash_before_result_ack`, `runner_unavailable` |
 | `POSTGRES_PORT` / `API_PORT`               | `55432` / `8000` | host ports                                   |
+| `COMMIT_SHA`                               | `unknown`| stamped on the build and into every evidence file; `scripts/*.sh` set it from git |
 
 ## Repository layout
 

@@ -12,12 +12,10 @@ from .domain.enums import Language
 
 DEFAULT_IMAGES: dict[Language, str] = {
     Language.PYTHON3: "shodh-runner-python:1",
-    Language.CPP17: "shodh-runner-cpp:1",
 }
 
 _ENV_KEYS = {
     Language.PYTHON3: "RUNNER_IMAGE_PYTHON3",
-    Language.CPP17: "RUNNER_IMAGE_CPP17",
 }
 
 

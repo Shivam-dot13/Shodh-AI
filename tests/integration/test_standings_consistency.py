@@ -19,8 +19,8 @@ def comparable(board: dict) -> list[tuple]:
     ]
 
 
-def mixed_contest(fresh_contest, programs, scoring_mode="ICPC"):
-    bundle = fresh_contest(scoring_mode=scoring_mode)
+def mixed_contest(fresh_contest, programs):
+    bundle = fresh_contest()
     rohan = bundle["participants"]["rohan@acme.test"]
     meera = bundle["participants"]["meera@acme.test"]
     pending = []
@@ -38,9 +38,8 @@ def mixed_contest(fresh_contest, programs, scoring_mode="ICPC"):
     return bundle
 
 
-@pytest.mark.parametrize("scoring_mode", ["ICPC", "POINTS"])
-def test_all_three_paths_agree(fresh_contest, programs, scoring_mode):
-    bundle = mixed_contest(fresh_contest, programs, scoring_mode)
+def test_all_three_paths_agree(fresh_contest, programs):
+    bundle = mixed_contest(fresh_contest, programs)
     organizer = bundle["organizer"]
 
     served = organizer.get(f"/contests/{bundle['contest_id']}/leaderboard?source=standings").json()
@@ -124,3 +123,65 @@ def test_query_plans_are_available_for_both_paths(fresh_contest, programs):
         plan = response.json()["plan"]
         assert any("cost=" in line for line in plan), plan[:3]
         assert any("Execution Time" in line for line in plan), plan[-3:]
+
+
+def test_an_etag_identifies_the_page_not_just_the_contest(fresh_contest, programs):
+    """Paging with If-None-Match must never be answered with a different page."""
+    bundle = mixed_contest(fresh_contest, programs)
+    organizer = bundle["organizer"]
+    first = organizer.get(f"/contests/{bundle['contest_id']}/leaderboard?limit=1&offset=0")
+    assert first.status_code == 200
+    tag = first.headers["ETag"]
+
+    same = organizer.get(
+        f"/contests/{bundle['contest_id']}/leaderboard?limit=1&offset=0",
+        headers={"If-None-Match": tag},
+    )
+    assert same.status_code == 304, "an unchanged page must still be cacheable"
+
+    other_page = organizer.get(
+        f"/contests/{bundle['contest_id']}/leaderboard?limit=1&offset=1",
+        headers={"If-None-Match": tag},
+    )
+    assert other_page.status_code == 200, "a different page must not be answered with 304"
+    assert other_page.json()["items"] != first.json()["items"]
+
+    other_size = organizer.get(
+        f"/contests/{bundle['contest_id']}/leaderboard?limit=2&offset=0",
+        headers={"If-None-Match": tag},
+    )
+    assert other_size.status_code == 200
+    assert len(other_size.json()["items"]) == 2
+
+
+def test_a_new_verdict_invalidates_a_cached_page(fresh_contest, programs):
+    bundle = fresh_contest()
+    rohan = bundle["participants"]["rohan@acme.test"]
+    held = rohan.get(f"/contests/{bundle['contest_id']}/leaderboard")
+    tag = held.headers["ETag"]
+    assert (
+        rohan.get(f"/contests/{bundle['contest_id']}/leaderboard", headers={"If-None-Match": tag}).status_code
+        == 304
+    )
+
+    submission = submit(rohan, bundle["contest_id"], bundle["problem_id"], programs("accepted")).json()
+    wait_for_terminal(rohan, submission["id"])
+    refreshed = rohan.get(
+        f"/contests/{bundle['contest_id']}/leaderboard", headers={"If-None-Match": tag}
+    )
+    assert refreshed.status_code == 200
+    assert refreshed.json()["items"][0]["points"] == 100
+
+
+def test_the_expensive_derivation_paths_are_organizer_only(fresh_contest, programs):
+    """A participant must not be able to ask for the path that re-derives the whole contest."""
+    bundle = fresh_contest()
+    rohan = bundle["participants"]["rohan@acme.test"]
+    for source in ("naive", "rebuild"):
+        response = rohan.get(f"/contests/{bundle['contest_id']}/leaderboard?source={source}")
+        assert response.status_code == 403, source
+        assert response.json()["error"]["type"] == "authorization"
+    assert rohan.get(f"/contests/{bundle['contest_id']}/leaderboard?source=standings").status_code == 200
+    assert bundle["organizer"].get(
+        f"/contests/{bundle['contest_id']}/leaderboard?source=naive"
+    ).status_code == 200

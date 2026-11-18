@@ -1,36 +1,35 @@
 {
   "label": "realrunner",
   "labels": {
-    "started_at": "2026-11-17T12:01:55+0000",
-    "commit": "2a046fe",
+    "started_at": "2026-11-18T10:04:31+0000",
+    "commit": "817bae6",
     "configured_execution_mode": "docker",
     "api_base_url": "http://api:8000",
     "workers_running": true,
     "markers_selected": "realrunner",
     "api_version": {
       "service": "api",
-      "commit": "2a046fe",
+      "commit": "817bae6",
       "execution_mode": "docker",
       "lease_seconds": 30,
       "max_deliveries": 3,
       "languages": {
-        "python3": "shodh-runner-python:1",
-        "cpp17": "shodh-runner-cpp:1"
+        "python3": "shodh-runner-python:1"
       },
       "failpoints_armed": []
     },
     "data_version": "seed-v1",
     "programs_version": "programs-v1",
-    "seeded_at": "2026-11-17T12:01:53.683701+00:00"
+    "seeded_at": "2026-11-18T10:04:29.085410+00:00"
   },
   "totals": {
-    "passed": 19
+    "passed": 15
   },
   "results": [
     {
       "test": "tests/realrunner/test_isolation.py::TestResourceLimits::test_wall_clock_limit_is_enforced",
       "outcome": "passed",
-      "duration_s": 8.512,
+      "duration_s": 8.511,
       "markers": [
         "realrunner"
       ],
@@ -39,7 +38,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestResourceLimits::test_output_limit_is_enforced",
       "outcome": "passed",
-      "duration_s": 1.161,
+      "duration_s": 1.167,
       "markers": [
         "realrunner"
       ],
@@ -48,7 +47,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestResourceLimits::test_memory_limit_is_enforced",
       "outcome": "passed",
-      "duration_s": 1.406,
+      "duration_s": 1.408,
       "markers": [
         "realrunner"
       ],
@@ -57,7 +56,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestResourceLimits::test_a_crashing_program_is_a_runtime_error_not_a_judge_failure",
       "outcome": "passed",
-      "duration_s": 1.173,
+      "duration_s": 1.188,
       "markers": [
         "realrunner"
       ],
@@ -66,7 +65,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestResourceLimits::test_process_count_is_capped",
       "outcome": "passed",
-      "duration_s": 8.655,
+      "duration_s": 9.638,
       "markers": [
         "realrunner"
       ],
@@ -75,7 +74,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestSandboxBoundary::test_the_sandbox_has_no_network",
       "outcome": "passed",
-      "duration_s": 1.57,
+      "duration_s": 1.577,
       "markers": [
         "realrunner"
       ],
@@ -84,7 +83,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestSandboxBoundary::test_the_root_filesystem_is_read_only",
       "outcome": "passed",
-      "duration_s": 1.156,
+      "duration_s": 1.2,
       "markers": [
         "realrunner"
       ],
@@ -93,7 +92,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestSandboxBoundary::test_submitted_code_does_not_run_as_root",
       "outcome": "passed",
-      "duration_s": 1.454,
+      "duration_s": 1.387,
       "markers": [
         "realrunner"
       ],
@@ -102,7 +101,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestSandboxBoundary::test_the_docker_control_socket_is_not_reachable",
       "outcome": "passed",
-      "duration_s": 1.181,
+      "duration_s": 1.196,
       "markers": [
         "realrunner"
       ],
@@ -111,7 +110,7 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestCleanup::test_no_sandbox_container_is_left_behind",
       "outcome": "passed",
-      "duration_s": 10.758,
+      "duration_s": 10.843,
       "markers": [
         "realrunner"
       ],
@@ -120,90 +119,48 @@
     {
       "test": "tests/realrunner/test_isolation.py::TestCleanup::test_the_runner_image_is_recorded_on_every_attempt",
       "outcome": "passed",
-      "duration_s": 0.929,
+      "duration_s": 1.153,
       "markers": [
         "realrunner"
       ],
       "execution_mode": "docker"
     },
     {
-      "test": "tests/realrunner/test_languages.py::test_a_correct_program_is_accepted[python3]",
+      "test": "tests/realrunner/test_language.py::test_a_correct_program_is_accepted",
       "outcome": "passed",
-      "duration_s": 1.138,
-      "markers": [
-        "parametrize",
-        "realrunner"
-      ],
-      "execution_mode": "docker"
-    },
-    {
-      "test": "tests/realrunner/test_languages.py::test_a_correct_program_is_accepted[cpp17]",
-      "outcome": "passed",
-      "duration_s": 1.591,
-      "markers": [
-        "parametrize",
-        "realrunner"
-      ],
-      "execution_mode": "docker"
-    },
-    {
-      "test": "tests/realrunner/test_languages.py::test_a_wrong_program_is_a_wrong_answer[python3]",
-      "outcome": "passed",
-      "duration_s": 0.951,
-      "markers": [
-        "parametrize",
-        "realrunner"
-      ],
-      "execution_mode": "docker"
-    },
-    {
-      "test": "tests/realrunner/test_languages.py::test_a_wrong_program_is_a_wrong_answer[cpp17]",
-      "outcome": "passed",
-      "duration_s": 1.166,
-      "markers": [
-        "parametrize",
-        "realrunner"
-      ],
-      "execution_mode": "docker"
-    },
-    {
-      "test": "tests/realrunner/test_languages.py::test_a_broken_program_is_a_compile_error[python3]",
-      "outcome": "passed",
-      "duration_s": 1.197,
-      "markers": [
-        "parametrize",
-        "realrunner"
-      ],
-      "execution_mode": "docker"
-    },
-    {
-      "test": "tests/realrunner/test_languages.py::test_a_broken_program_is_a_compile_error[cpp17]",
-      "outcome": "passed",
-      "duration_s": 0.948,
-      "markers": [
-        "parametrize",
-        "realrunner"
-      ],
-      "execution_mode": "docker"
-    },
-    {
-      "test": "tests/realrunner/test_languages.py::test_a_cpp_runtime_failure_is_a_runtime_error",
-      "outcome": "passed",
-      "duration_s": 1.765,
+      "duration_s": 1.156,
       "markers": [
         "realrunner"
       ],
       "execution_mode": "docker"
     },
     {
-      "test": "tests/realrunner/test_languages.py::test_the_version_endpoint_lists_the_languages_it_can_run",
+      "test": "tests/realrunner/test_language.py::test_a_wrong_program_is_a_wrong_answer",
       "outcome": "passed",
-      "duration_s": 0.022,
+      "duration_s": 1.217,
+      "markers": [
+        "realrunner"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/realrunner/test_language.py::test_a_syntax_error_is_a_compile_error",
+      "outcome": "passed",
+      "duration_s": 1.189,
+      "markers": [
+        "realrunner"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/realrunner/test_language.py::test_version_lists_the_language_it_can_run",
+      "outcome": "passed",
+      "duration_s": 0.016,
       "markers": [
         "realrunner"
       ],
       "execution_mode": "docker"
     }
   ],
-  "finished_at": "2026-11-17T12:02:42+0000"
+  "finished_at": "2026-11-18T10:05:14+0000"
 }

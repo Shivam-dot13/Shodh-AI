@@ -1,18 +1,11 @@
 """Applying a verdict to the standings.
 
-The whole scoring write path is one function: recompute one (contest, user, problem) cell from
-the authoritative judged attempts of that cell and store the result. Properties this buys:
+The write path is one function: recompute a (contest, user, problem) cell from that cell's
+judged attempts and store it. No += anywhere, which is what makes replays, out-of-order
+completions and rejudges all the same case.
 
-* Idempotent. Replaying the same completion recomputes the same value, so a duplicated
-  delivery cannot award points twice. There is no += anywhere.
-* Order independent. Results that complete out of order land in the same final state, because
-  the cell is a function of the stored set of attempts, not of arrival order.
-* Rejudge safe. A late result from a replaced attempt is written to its own attempt row but is
-  not authoritative (a higher attempt_no exists), so the cell does not move.
-
-Concurrency is handled by taking the cell row FOR UPDATE: two workers completing two
-submissions of the same cell serialize on that row, and the loser recomputes from a set that
-already includes the winner.
+Two workers finishing submissions in the same cell serialize on the cell row (FOR UPDATE); the
+loser recomputes from a set that already has the winner in it.
 """
 from __future__ import annotations
 
@@ -97,7 +90,6 @@ def recompute_cell(
     cell_row = _lock_cell(session, contest.id, user_id, problem_id)
     rows = judged_rows_for_cell(session, contest.id, user_id, problem_id)
     result = score_cell(
-        mode=contest.scoring_mode,
         penalty_per_rejection=contest.penalty_minutes,
         contest_start=contest.starts_at,
         rows=rows,

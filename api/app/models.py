@@ -1,16 +1,14 @@
-"""Relational schema.
+"""Database schema.
 
-Invariants worth calling out (all enforced by the database, not by application code):
+The constraints here do the real work, not the application code:
 
-* unique(submissions.contest_id, user_id, idempotency_key) -- idempotent submission creation
-  survives an API restart and any number of competing processes.
-* unique(judging_attempts.submission_id, attempt_no)       -- attempt history is append-only.
-* unique(judge_jobs.attempt_id)                            -- one queue row per attempt, so a
-  retried dispatch cannot create a second job.
-* unique(problem_scores.contest_id, user_id, problem_id)   -- one score row per cell; scoring is
-  a recompute of that row, never an increment, so points cannot be awarded twice.
-* Every attempt pins problem_version_id + test_suite_id + runtime_config, so editing a problem
-  cannot change the meaning of a historical verdict.
+  unique(submissions.contest_id, user_id, idempotency_key)   idempotent submission creation
+  unique(judging_attempts.submission_id, attempt_no)         attempt history is append-only
+  unique(judge_jobs.attempt_id)                              one queue row per attempt
+  unique(problem_scores.contest_id, user_id, problem_id)     one score row per cell
+
+Each attempt also pins problem_version_id, test_suite_id and runtime_config, so editing a
+problem cannot change what an old verdict meant.
 """
 from __future__ import annotations
 
@@ -369,11 +367,10 @@ class AttemptTestResult(Base):
 
 
 class JudgeJob(Base):
-    """Transactional outbox and work queue in one table.
+    """Outbox and work queue in one table.
 
-    The job row is inserted in the same transaction as the submission and its first attempt, so
-    there is no window in which a committed submission has no dispatched job. Workers claim with
-    SELECT ... FOR UPDATE SKIP LOCKED; abandoned leases are reclaimed on expiry.
+    The row is inserted in the same transaction as the submission, so a committed submission
+    always has a job. Claimed with SELECT ... FOR UPDATE SKIP LOCKED.
     """
 
     __tablename__ = "judge_jobs"
@@ -404,9 +401,8 @@ class JudgeJob(Base):
 class ProblemScore(Base):
     """One (contest, user, problem) cell of the standings.
 
-    Maintained by recomputing the cell from authoritative attempts inside the verdict
-    transaction. It is derived data, but never stale: there is no asynchronous refresh path, so
-    the serving path and a full rebuild always agree.
+    Recomputed from the authoritative attempts inside the verdict transaction. Derived, but
+    never stale: there is no async refresh path.
     """
 
     __tablename__ = "problem_scores"
@@ -438,11 +434,9 @@ class ProblemScore(Base):
 
 
 class Failpoint(Base):
-    """Shared fault-injection switches.
+    """Fault-injection switches, kept in the database so every API process sees the same ones.
 
-    Kept in the database rather than in process memory so that a failpoint applies to every API
-    process at once; a deployment runs several, and a fault only half the fleet obeys would
-    prove nothing. Writes are refused unless the development auth fixture is enabled.
+    Writes are refused unless the dev auth fixture is enabled.
     """
 
     __tablename__ = "failpoints"

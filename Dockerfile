@@ -1,5 +1,3 @@
-# One image, three roles (api, worker, tests). Keeps the dependency set and the commit label
-# identical across every process that takes part in a measurement.
 FROM python:3.12-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \

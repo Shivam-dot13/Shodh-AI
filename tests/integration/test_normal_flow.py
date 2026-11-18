@@ -116,7 +116,9 @@ def test_standings_version_advances_with_every_verdict(fresh_contest, programs):
     wait_for_terminal(rohan, submission["id"])
     after = rohan.get(f"/contests/{bundle['contest_id']}/leaderboard")
     assert after.json()["standings_version"] > before
-    assert after.headers["ETag"] == f"W/\"{after.json()['standings_version']}\""
+    # The tag identifies the representation: version, source and the page requested.
+    assert str(after.json()["standings_version"]) in after.headers["ETag"]
+    assert "standings" in after.headers["ETag"]
 
     cached = rohan.get(
         f"/contests/{bundle['contest_id']}/leaderboard", headers={"If-None-Match": after.headers["ETag"]}

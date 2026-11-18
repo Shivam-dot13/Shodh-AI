@@ -1,10 +1,3 @@
-# The whole system: `docker compose up --build` migrates, seeds and starts two API processes
-# and two judge workers against one PostgreSQL instance.
-#
-# Why two of each: every correctness claim in this submission has to hold with more than one
-# process competing for the same rows, so the default deployment is the one the tests assert
-# against. The judge queue is a table, not a broker, so scaling is just more replicas.
-
 x-app-env: &app-env
   DATABASE_URL: postgresql+psycopg://shodh:shodh_dev_password@postgres:5432/shodh
   EXEC_MODE: ${EXEC_MODE:-docker}
@@ -16,7 +9,6 @@ x-app-env: &app-env
   JUDGE_SERVICE_TOKEN: ${JUDGE_SERVICE_TOKEN:-shodh_judge_dev_token}
   PLATFORM_ADMIN_TOKEN: ${PLATFORM_ADMIN_TOKEN:-shodh_platform_admin_dev_token}
   RUNNER_IMAGE_PYTHON3: ${RUNNER_IMAGE_PYTHON3:-shodh-runner-python:1}
-  RUNNER_IMAGE_CPP17: ${RUNNER_IMAGE_CPP17:-shodh-runner-cpp:1}
 
 services:
   postgres:
@@ -41,8 +33,6 @@ services:
     ports:
       - "${POSTGRES_PORT:-55432}:5432"
 
-  # One-shot: alembic upgrade head, then the deterministic seed bundle. The API will not start
-  # until this has exited successfully, so a fresh `up` is always a usable system.
   migrate:
     build:
       context: .
@@ -82,10 +72,6 @@ services:
       timeout: 3s
       retries: 20
 
-  # The judge. Holds the Docker socket so it can start a sibling container per attempt; the
-  # submitted program never sees the socket, no host path is mounted into it, and the container
-  # it runs in has no network. Runs as root because the socket is root-owned; nothing
-  # participant-supplied is executed in this container.
   worker:
     build:
       context: .
@@ -107,9 +93,6 @@ services:
     deploy:
       replicas: ${WORKER_REPLICAS:-2}
 
-  # Tooling, not part of `up`. Started explicitly:
-  #   docker compose run --rm tests pytest -m "unit or integration"
-  #   docker compose run --rm bench python -m bench.workload --help
   tests:
     build:
       context: .

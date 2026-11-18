@@ -97,7 +97,6 @@ def main() -> int:
         ("dev", dev, sum_two, "timeout", "python3"),
         ("dev", dev, sum_two, "excessive_output", "python3"),
         ("dev", dev, sum_two, "compile_error", "python3"),
-        ("dev", dev, sum_two, "accepted", "cpp17"),
         ("rohan", rohan, sum_two, "runner_failure_controllable", "python3"),
     ]
     submitted = []

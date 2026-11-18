@@ -1,29 +1,22 @@
 """Contest rules as pure functions.
 
-Nothing here touches the database or the clock, so the rules are unit-testable and the same
-code backs both the incremental serving path and the full rebuild. Scoring is defined as a
-*function of the authoritative judged attempts*, never as an increment, which is why a
-duplicated or out-of-order completion cannot change a score twice.
+No clock, no database, so the rules are unit-testable on their own and the same code backs both
+the live write path and a full rebuild. Scoring is a function of the authoritative judged
+attempts, never an increment, which is why a duplicated or out-of-order completion cannot change
+a score twice.
 
-Authoritative attempt of a submission
-    the COMPLETED attempt with the highest attempt_no. An attempt that failed for judge
-    infrastructure reasons has no verdict and is therefore never authoritative, so a runner
-    crash can never lower a score. A late result from an attempt that a rejudge has already
-    replaced cannot become authoritative either, because a higher attempt_no exists.
+Authoritative attempt of a submission: the COMPLETED attempt with the highest attempt_no. An
+attempt that failed for judge-infrastructure reasons has no verdict and so is never
+authoritative, meaning a runner crash cannot lower a score. A late result from an attempt a
+rejudge has replaced cannot become authoritative either, because a higher attempt_no exists.
 
-ICPC mode
-    points   = max_points of the pinned problem version on the first accepted submission
-    penalty  = minutes from contest start to that submission
-               + contest.penalty_minutes * (judged, non-accepted submissions before it)
-    rank by    solved desc, penalty asc, last_solved_at asc, user_id asc
+Scoring (ICPC style):
+    points  = max_points of the pinned problem version, on the first accepted submission
+    penalty = minutes from contest start to that submission
+              + penalty_minutes for each judged, non-accepted submission before it
+    rank by   solved desc, penalty asc, last_solved_at asc, user_id asc
 
-POINTS mode
-    points   = best score over judged submissions (earliest submission wins a tie)
-    penalty  = not used
-    rank by    points desc, last_progress_at asc, user_id asc
-
-Both orderings end in user_id, so the order is total and therefore stable across pages,
-processes and rebuilds.
+The order ends in user_id, so it is total: stable across pages, processes and rebuilds.
 """
 from __future__ import annotations
 
@@ -32,7 +25,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from ..domain.enums import ScoringMode, Verdict
+from ..domain.enums import Verdict
 
 
 @dataclass(frozen=True)
@@ -69,7 +62,6 @@ def _minutes_since(start: datetime, when: datetime) -> int:
 
 def score_cell(
     *,
-    mode: ScoringMode,
     penalty_per_rejection: int,
     contest_start: datetime,
     rows: list[JudgedSubmission],
@@ -79,36 +71,24 @@ def score_cell(
     if not ordered:
         return CellResult()
 
-    if mode is ScoringMode.ICPC:
-        rejected = 0
-        for row in ordered:
-            if row.accepted:
-                return CellResult(
-                    points=row.max_score,
-                    solved=True,
-                    solved_at=row.submitted_at,
-                    penalty_minutes=_minutes_since(contest_start, row.submitted_at)
-                    + penalty_per_rejection * rejected,
-                    rejected_before_solve=rejected,
-                    authoritative_attempt_id=row.attempt_id,
-                    submission_id=row.submission_id,
-                    last_progress_at=row.submitted_at,
-                )
-            rejected += 1
-        return CellResult(rejected_before_solve=rejected, last_progress_at=ordered[-1].submitted_at)
-
-    # Highest score wins; among equal scores the earliest submission wins.
-    best = max(enumerate(ordered), key=lambda pair: (pair[1].score, -pair[0]))[1]
-    return CellResult(
-        points=best.score,
-        solved=best.accepted,
-        solved_at=best.submitted_at if best.accepted else None,
-        penalty_minutes=0,
-        rejected_before_solve=sum(1 for r in ordered if not r.accepted),
-        authoritative_attempt_id=best.attempt_id,
-        submission_id=best.submission_id,
-        last_progress_at=best.submitted_at,
-    )
+    rejected = 0
+    for row in ordered:
+        if row.accepted:
+            return CellResult(
+                points=row.max_score,
+                solved=True,
+                solved_at=row.submitted_at,
+                penalty_minutes=_minutes_since(contest_start, row.submitted_at)
+                + penalty_per_rejection * rejected,
+                rejected_before_solve=rejected,
+                authoritative_attempt_id=row.attempt_id,
+                submission_id=row.submission_id,
+                last_progress_at=row.submitted_at,
+            )
+        rejected += 1
+    # Nothing accepted: no points and no penalty. Penalty is only ever paid for a problem that
+    # was eventually solved.
+    return CellResult(rejected_before_solve=rejected, last_progress_at=ordered[-1].submitted_at)
 
 
 @dataclass
@@ -144,15 +124,13 @@ def _tiebreak_time(value: datetime | None) -> tuple[int, float]:
     return (1, 0.0) if value is None else (0, value.timestamp())
 
 
-def rank_key(mode: ScoringMode, totals: UserTotals) -> tuple:
-    if mode is ScoringMode.ICPC:
-        return (
-            -totals.solved,
-            totals.penalty_minutes,
-            _tiebreak_time(totals.last_solved_at),
-            str(totals.user_id),
-        )
-    return (-totals.points, _tiebreak_time(totals.last_progress_at), str(totals.user_id))
+def rank_key(totals: UserTotals) -> tuple:
+    return (
+        -totals.solved,
+        totals.penalty_minutes,
+        _tiebreak_time(totals.last_solved_at),
+        str(totals.user_id),
+    )
 
 
 @dataclass
@@ -167,17 +145,15 @@ class StandingRow:
     cells: dict[uuid.UUID, CellResult]
 
 
-def rank_users(mode: ScoringMode, users: list[UserTotals]) -> list[StandingRow]:
-    """Dense ranking: equal scores share a rank, order is still total."""
-    ordered = sorted(users, key=lambda t: rank_key(mode, t))
+def rank_users(users: list[UserTotals]) -> list[StandingRow]:
+    """Competition ranking: equal scores share a rank and the next rank skips (1, 1, 3)."""
+    ordered = sorted(users, key=rank_key)
     rows: list[StandingRow] = []
     previous_score: tuple | None = None
     rank = 0
     for index, totals in enumerate(ordered, start=1):
-        if mode is ScoringMode.ICPC:
-            score_part = (totals.solved, totals.penalty_minutes)
-        else:
-            score_part = (totals.points,)
+        # Only the score-significant columns decide a tie; last_solved_at just fixes the order.
+        score_part = (totals.solved, totals.penalty_minutes)
         if score_part != previous_score:
             rank = index
             previous_score = score_part

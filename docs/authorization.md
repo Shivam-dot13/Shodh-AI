@@ -37,8 +37,8 @@ A `judge` token cannot be minted for a human identity: the database enforces
 | join a contest and submit                                | no        | yes         |
 | read the leaderboard                                     | yes       | yes         |
 
-An organizer cannot submit. It is not a privilege question — a scoreboard that can contain its
-own author is a worse scoreboard.
+An organizer cannot submit. Not a privilege question: a scoreboard that can contain its own
+author is a worse scoreboard.
 
 ## Tenancy: 404, not 403
 
@@ -66,7 +66,7 @@ Hidden test inputs and expected outputs leave the database on exactly one route:
   or the program's own output.
 * Sample cases are published; non-sample cases are not, at any point in the contest.
 * `GET /problems/{id}/test-suites` is organizer-only, and returns suite versions and case
-  **counts** — never case contents.
+  **counts**, never case contents.
 * Compile output is returned to the author of the submission, because it is their compiler
   talking about their file.
 * Structured logs drop a fixed set of field names defensively

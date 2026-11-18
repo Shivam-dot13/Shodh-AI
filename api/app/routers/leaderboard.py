@@ -11,7 +11,7 @@ from ..auth import Principal, require_organizer, require_user
 from ..config import get_settings
 from ..db import get_session
 from ..domain import failpoints
-from ..domain.errors import ValidationError
+from ..domain.errors import AuthorizationError, ValidationError
 from ..schemas import CellOut, LeaderboardOut, Page, StandingOut
 from ..services import access, standings
 from ..services.scores import rebuild_all_cells
@@ -40,25 +40,33 @@ def leaderboard(
     """How clients observe updates
 
     The response carries `standings_version`, a counter bumped inside the transaction that
-    stores a verdict, and an `ETag` of that counter. A client polls and compares; a 304 means
-    nothing has changed. There is no asynchronous refresh anywhere in the write path, so a
-    successful read is never behind a verdict that has already been stored.
+    stores a verdict, and an `ETag` identifying this representation: the version together with
+    the source, limit and offset, so paging with `If-None-Match` cannot be answered with a page
+    the client has never seen. A 304 means this exact page is unchanged. There is no
+    asynchronous refresh anywhere in the write path, so a successful read is never behind a
+    verdict that has already been stored.
 
     `source` selects the computation path and exists for evidence, not for tuning:
       standings  the maintained problem_scores cells (what everyone gets by default)
       naive      recompute from submissions and attempts on every request (pre-optimization)
       rebuild    full recompute in Python from authoritative records
-    All three must return the same ranking; /standings/verify asserts it.
+    All three must return the same ranking; /standings/verify asserts it. The two re-deriving
+    paths are organizer-only, because they cost far more than the serving path.
     """
     chosen = source or settings.default_standings_source
     if chosen not in _SOURCES:
         raise ValidationError(f"source must be one of {sorted(_SOURCES)}")
     contest = access.get_contest(session, principal, contest_id)
 
-    if chosen == "rebuild" and not principal.is_organizer:
-        raise ValidationError("the rebuild path is organizer-only; it reads the whole contest")
+    if chosen != "standings" and not principal.is_organizer:
+        # Both evidence paths re-derive the whole contest per request, so they cost one to two
+        # orders of magnitude more than the serving path. Leaving them open to participants would
+        # hand every one of them a cheap way to load the database.
+        raise AuthorizationError(f"the {chosen} path is organizer-only; it re-derives the whole contest")
 
-    etag = f'W/"{contest.standings_version}"'
+    # The entity tag has to identify the *representation*, not just the contest version: paging
+    # with If-None-Match would otherwise answer 304 for a page the client has never seen.
+    etag = f'W/"{contest.standings_version}-{chosen}-{limit}-{offset}"'
     if if_none_match and if_none_match.strip() == etag:
         return Response(status_code=304, headers={"ETag": etag, "X-Standings-Source": chosen})
 
@@ -73,7 +81,7 @@ def leaderboard(
         page = standings.serve(session, contest, limit=limit, offset=offset)
     elapsed_ms = (time.perf_counter() - started) * 1000
 
-    response.headers["ETag"] = f'W/"{contest.standings_version}"'
+    response.headers["ETag"] = etag
     response.headers["X-Standings-Source"] = page.source
     response.headers["X-Compute-Ms"] = f"{elapsed_ms:.2f}"
     response.headers["Cache-Control"] = "no-cache"

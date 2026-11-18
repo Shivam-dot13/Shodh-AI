@@ -1,29 +1,16 @@
 """The judge protocol: lease, heartbeat, result, infrastructure failure, reclaim.
 
-Which guarantee comes from where
---------------------------------
-Persistent storage (PostgreSQL)
-    * One job row per attempt (unique attempt_id), so a retried dispatch cannot duplicate work.
-    * SELECT ... FOR UPDATE SKIP LOCKED makes claiming atomic across any number of workers and
-      any number of API processes; no in-process lock is involved anywhere.
-    * The verdict write is a conditional UPDATE guarded by state and lease_epoch, so only one
-      transaction can ever move an attempt into COMPLETED.
-    * Scoring is a recompute of a row held FOR UPDATE, so points cannot be awarded twice.
+What guarantees what:
 
-Worker protocol
-    * Leases expire. A worker must heartbeat to keep one; an abandoned lease is reclaimed.
-    * lease_epoch is a fencing token: every lease and every reclaim bumps it, and a result is
-      accepted only with the current value. A worker that was slow, paused or partitioned
-      cannot overwrite the result of the delivery that replaced it.
-    * Deliveries are bounded by max_deliveries; the last failure makes the attempt
-      INFRA_FAILED, which carries no verdict and leaves any earlier verdict and score alone.
-    * Delivery is at-least-once; the *effect* is exactly-once, because applying a result is
-      idempotent under a fixed lease_epoch.
-
-Runner (unavoidably)
-    * Whether a program that exceeded a limit is reported as TLE/MLE rather than a crash, and
-      whether the sandbox actually contained it. That is why the execution mode is recorded on
-      every attempt and labelled in every test result.
+Postgres    one job row per attempt; SKIP LOCKED claiming; the verdict write is a conditional
+            UPDATE guarded by state and lease_epoch; scoring recomputes a row held FOR UPDATE.
+            No in-process lock is involved anywhere.
+The worker  leases expire and must be heartbeated. lease_epoch is a fencing token, bumped on
+            every lease and reclaim, so a worker that stalled cannot overwrite the delivery
+            that replaced it. Deliveries are capped by max_deliveries. Delivery is
+            at-least-once; the effect is exactly-once.
+The runner  whether a program that broke a limit is reported as TLE rather than a crash, and
+            whether the sandbox really held it. Hence exec_mode on every attempt.
 """
 from __future__ import annotations
 
@@ -69,20 +56,7 @@ class Lease:
     delivery_count: int
 
 
-_CLAIM_SQL = text(
-    """
-WITH candidate AS (
-    SELECT j.id
-    FROM judge_jobs j
-    JOIN judging_attempts a ON a.id = j.attempt_id
-    JOIN submissions s ON s.id = a.submission_id
-    WHERE j.state = 'READY'
-      AND j.available_at <= now()
-      AND (CAST(:contest_id AS uuid) IS NULL OR s.contest_id = CAST(:contest_id AS uuid))
-    ORDER BY j.priority, j.available_at, j.id
-    FOR UPDATE OF j SKIP LOCKED
-    LIMIT :capacity
-)
+_LEASE_TAIL = """
 UPDATE judge_jobs j
 SET state = 'LEASED',
     leased_by = :worker_id,
@@ -93,6 +67,42 @@ FROM candidate c
 WHERE j.id = c.id
 RETURNING j.id AS job_id, j.attempt_id, j.delivery_count, j.lease_expires_at
 """
+
+# The common claim. Deliberately touches one table so the planner can walk ix_jobs_claim in
+# (priority, available_at, id) order and stop at LIMIT, instead of collecting every ready job
+# and sorting. With a large backlog that difference is the whole cost of the call.
+_CLAIM_SQL = text(
+    """
+WITH candidate AS (
+    SELECT j.id
+    FROM judge_jobs j
+    WHERE j.state = 'READY' AND j.available_at <= now()
+    ORDER BY j.priority, j.available_at, j.id
+    FOR UPDATE SKIP LOCKED
+    LIMIT :capacity
+)
+"""
+    + _LEASE_TAIL
+)
+
+# Used only when a worker asks for one contest. It has to join, so it pays for the filter; the
+# unfiltered path above must not.
+_CLAIM_FOR_CONTEST_SQL = text(
+    """
+WITH candidate AS (
+    SELECT j.id
+    FROM judge_jobs j
+    JOIN judging_attempts a ON a.id = j.attempt_id
+    JOIN submissions s ON s.id = a.submission_id
+    WHERE j.state = 'READY'
+      AND j.available_at <= now()
+      AND s.contest_id = :contest_id
+    ORDER BY j.priority, j.available_at, j.id
+    FOR UPDATE OF j SKIP LOCKED
+    LIMIT :capacity
+)
+"""
+    + _LEASE_TAIL
 )
 
 # Bumping lease_epoch here is what fences out the previous holder of this attempt.
@@ -120,15 +130,13 @@ def lease_jobs(
     its own dataset.
     """
     capacity = max(1, min(capacity, 16))
-    claimed = session.execute(
-        _CLAIM_SQL,
-        {
-            "capacity": capacity,
-            "worker_id": worker_id,
-            "lease_seconds": settings.lease_seconds,
-            "contest_id": contest_id,
-        },
-    ).mappings().all()
+    params = {"capacity": capacity, "worker_id": worker_id, "lease_seconds": settings.lease_seconds}
+    if contest_id is None:
+        claimed = session.execute(_CLAIM_SQL, params).mappings().all()
+    else:
+        claimed = session.execute(
+            _CLAIM_FOR_CONTEST_SQL, params | {"contest_id": contest_id}
+        ).mappings().all()
     leases: list[Lease] = []
     for row in claimed:
         epoch = session.execute(

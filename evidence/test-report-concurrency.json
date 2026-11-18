@@ -1,36 +1,35 @@
 {
   "label": "concurrency",
   "labels": {
-    "started_at": "2026-11-17T12:02:49+0000",
-    "commit": "2a046fe",
+    "started_at": "2026-11-18T10:05:21+0000",
+    "commit": "817bae6",
     "configured_execution_mode": "docker",
     "api_base_url": "http://api:8000",
     "workers_running": false,
     "markers_selected": "concurrency",
     "api_version": {
       "service": "api",
-      "commit": "2a046fe",
+      "commit": "817bae6",
       "execution_mode": "docker",
       "lease_seconds": 30,
       "max_deliveries": 3,
       "languages": {
-        "python3": "shodh-runner-python:1",
-        "cpp17": "shodh-runner-cpp:1"
+        "python3": "shodh-runner-python:1"
       },
       "failpoints_armed": []
     },
     "data_version": "seed-v1",
     "programs_version": "programs-v1",
-    "seeded_at": "2026-11-17T12:02:48.018827+00:00"
+    "seeded_at": "2026-11-18T10:05:19.157307+00:00"
   },
   "totals": {
-    "passed": 11
+    "passed": 12
   },
   "results": [
     {
       "test": "tests/integration/test_judge_protocol.py::test_payload_carries_hidden_data_only_on_the_judge_plane",
       "outcome": "passed",
-      "duration_s": 0.092,
+      "duration_s": 0.081,
       "markers": [
         "concurrency",
         "integration"
@@ -40,7 +39,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_two_competing_workers_never_get_the_same_job",
       "outcome": "passed",
-      "duration_s": 0.107,
+      "duration_s": 0.091,
       "markers": [
         "concurrency",
         "integration"
@@ -60,7 +59,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_an_expired_lease_is_reclaimed_and_the_old_holder_is_fenced_out",
       "outcome": "passed",
-      "duration_s": 0.146,
+      "duration_s": 0.131,
       "markers": [
         "concurrency",
         "integration"
@@ -80,7 +79,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_out_of_order_completion_lands_in_the_right_final_state",
       "outcome": "passed",
-      "duration_s": 0.185,
+      "duration_s": 0.154,
       "markers": [
         "concurrency",
         "integration"
@@ -90,7 +89,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_a_late_result_from_a_replaced_attempt_does_not_move_the_standings",
       "outcome": "passed",
-      "duration_s": 0.179,
+      "duration_s": 0.166,
       "markers": [
         "concurrency",
         "integration"
@@ -100,7 +99,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_retries_are_bounded_and_end_as_an_infrastructure_failure",
       "outcome": "passed",
-      "duration_s": 0.429,
+      "duration_s": 0.218,
       "markers": [
         "concurrency",
         "integration"
@@ -110,7 +109,7 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_a_result_outside_the_pinned_suite_is_refused",
       "outcome": "passed",
-      "duration_s": 0.135,
+      "duration_s": 0.12,
       "markers": [
         "concurrency",
         "integration"
@@ -120,7 +119,17 @@
     {
       "test": "tests/integration/test_judge_protocol.py::test_a_completed_attempt_cannot_be_rewritten",
       "outcome": "passed",
-      "duration_s": 0.128,
+      "duration_s": 0.114,
+      "markers": [
+        "concurrency",
+        "integration"
+      ],
+      "execution_mode": "docker"
+    },
+    {
+      "test": "tests/integration/test_judge_protocol.py::test_a_lease_can_be_restricted_to_one_contest",
+      "outcome": "passed",
+      "duration_s": 0.183,
       "markers": [
         "concurrency",
         "integration"
@@ -130,7 +139,7 @@
     {
       "test": "tests/integration/test_recovery.py::test_a_worker_that_dies_before_acknowledging_produces_exactly_one_verdict",
       "outcome": "passed",
-      "duration_s": 0.142,
+      "duration_s": 0.144,
       "markers": [
         "concurrency",
         "integration"
@@ -138,5 +147,5 @@
       "execution_mode": "docker"
     }
   ],
-  "finished_at": "2026-11-17T12:02:52+0000"
+  "finished_at": "2026-11-18T10:05:23+0000"
 }

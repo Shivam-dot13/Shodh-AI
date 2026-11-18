@@ -69,6 +69,32 @@ class Dataset:
     def load(cls, path: pathlib.Path) -> Dataset:
         return cls(**json.loads(path.read_text(encoding="utf-8")))
 
+    def is_live(self) -> bool:
+        """Is this handle still usable against the running system?
+
+        A handle outlives the database it describes: one `docker compose down -v` and its
+        contest id and organizer token are gone. Without this check a reused handle fails much
+        later with a bare 401, in the middle of a measurement.
+        """
+        try:
+            with client(self.organizer_token, timeout=10.0) as probe:
+                return probe.get(f"/contests/{self.contest_id}").status_code == 200
+        except Exception:
+            return False
+
+
+def load_or_build(handle: pathlib.Path | None, **build_kwargs) -> tuple[Dataset, bool]:
+    """Reuse a saved dataset when it is still live, otherwise build and save a fresh one."""
+    if handle is not None and handle.exists():
+        existing = Dataset.load(handle)
+        if existing.is_live():
+            return existing, True
+        print(f"[dataset] handle {handle} points at data that no longer exists; rebuilding", flush=True)
+    data = build(**build_kwargs)
+    if handle is not None:
+        data.save(handle)
+    return data, False
+
 
 def _program(role: str = "accepted") -> str:
     return (PROGRAMS / "sum_two_accepted.py").read_text(encoding="utf-8")
@@ -96,7 +122,6 @@ def build(
     problems: int,
     submissions_per_cell: int,
     cases_per_problem: int = 3,
-    scoring_mode: str = "ICPC",
     seed: int = 20261117,
     label: str | None = None,
 ) -> Dataset:
@@ -128,7 +153,7 @@ def build(
             "title": f"Benchmark contest {tag}",
             "starts_at": (now - dt.timedelta(hours=1)).isoformat(),
             "ends_at": (now + dt.timedelta(days=7)).isoformat(),
-            "scoring_mode": scoring_mode,
+            "scoring_mode": "ICPC",
             "penalty_minutes": 20,
         },
     )

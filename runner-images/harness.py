@@ -86,12 +86,9 @@ def _compile(language: str, time_budget_s: float) -> dict:
         "HOME": BOX,
         "TMPDIR": BOX,
     }
-    if language == "python3":
-        command = [sys.executable, "-m", "py_compile", "submission.py"]
-    elif language == "cpp17":
-        command = ["g++", "-O2", "-std=c++17", "-static", "-w", "-o", "prog", "submission.cpp"]
-    else:
+    if language != "python3":
         return {"ok": False, "message": f"unsupported language {language}", "time_ms": 0}
+    command = [sys.executable, "-m", "py_compile", "submission.py"]
     try:
         done = subprocess.run(
             command, cwd=BOX, capture_output=True, text=True, timeout=time_budget_s, env=env
@@ -110,9 +107,7 @@ def _compile(language: str, time_budget_s: float) -> dict:
 
 
 def _run_command(language: str) -> list[str]:
-    if language == "python3":
-        return [sys.executable, "-I", "-S", os.path.join(BOX, "submission.py")]
-    return [os.path.join(BOX, "prog")]
+    return [sys.executable, "-I", "-S", os.path.join(BOX, "submission.py")]
 
 
 def _child(command: list[str], input_path: str, output_path: str, limits: dict) -> None:

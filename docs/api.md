@@ -41,8 +41,7 @@ CONTEST=$(curl -s -H "Authorization: Bearer $ROHAN" "$API/contests" | python -c 
 | GET    | `/submissions/{id}`                           | owner, organizer | status, attempts, per-test outcomes          |
 | GET    | `/submissions/{id}/attempts`                  | organizer        | judge-level detail                           |
 | POST   | `/submissions/{id}/rejudge`                   | organizer        | rejudge against a chosen version pair        |
-| POST   | `/problems/{id}/rejudge`                      | organizer        | rejudge every submission of a problem        |
-| GET    | `/contests/{id}/leaderboard`                  | user             | standings (`source=standings\|naive\|rebuild`) |
+| GET    | `/contests/{id}/leaderboard`                  | user             | standings (`source=standings|naive|rebuild`) |
 | GET    | `/contests/{id}/standings/verify`             | organizer        | assert the three paths agree                 |
 | POST   | `/contests/{id}/standings/rebuild`            | organizer        | recompute every cell from records            |
 | GET    | `/contests/{id}/standings/explain`            | organizer        | `EXPLAIN (ANALYZE, BUFFERS)` for a path      |
@@ -106,7 +105,7 @@ curl -s -H "Authorization: Bearer $ROHAN" "$API/submissions/$ID"
 }
 ```
 
-No hidden input, no expected output, no program output — status and resource usage only.
+No hidden input, no expected output, no program output, status and resource usage only.
 
 ## Leaderboard
 

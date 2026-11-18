@@ -1,13 +1,11 @@
-"""Tenant-scoped object lookup.
+"""Tenant-scoped lookups.
 
-Every read and write goes through one of these, so authorization is not something a route can
-forget to do: there is no way to load a contest, problem or submission without stating who is
-asking.
+Everything goes through these, so a route cannot load a contest, problem or submission without
+saying who is asking.
 
-Rules
-    outside my organization -> 404 (knowing the id must not confirm that it exists)
-    inside my organization, wrong role -> 403 (the object is legitimately visible to the tenant)
-    a participant may read another participant submission *metadata*? no: not even that.
+  outside your organization            404
+  inside it, wrong role                403
+  another participant's submission     404, not even its existence
 """
 from __future__ import annotations
 

@@ -180,7 +180,17 @@ def judge_one(client: JudgeClient, runner, lease: dict) -> None:
         # Correct outcome, not an error: a newer delivery or a rejudge owns this attempt now.
         log.warning("result rejected as stale", extra={"detail": str(exc)[:300]})
     except JudgeApiUnavailable as exc:
+        # The API would not take this result and it is not a stale lease, so the two sides
+        # disagree about the contract. Hand the lease back as an infrastructure failure instead
+        # of sitting on it: otherwise the attempt waits out its whole lease before anyone can
+        # retry it, and the delay is invisible.
         log.error("could not report result", extra={"error": str(exc)[:300]})
+        try:
+            client.report_infra_failure(
+                attempt_id, lease_epoch, f"result rejected by the API: {exc}", request_id=request_id
+            )
+        except (StaleLease, JudgeApiUnavailable) as giving_up:
+            log.error("could not hand the lease back", extra={"error": str(giving_up)[:300]})
 
 
 def main() -> int:
@@ -208,15 +218,11 @@ def main() -> int:
     if hasattr(runner, "reap_strays"):
         runner.reap_strays()
     if hasattr(runner, "ensure_image"):
-        for language, dockerfile in (("python3", "python/Dockerfile"), ("cpp17", "cpp/Dockerfile")):
-            image = os.environ.get(
-                f"RUNNER_IMAGE_{language.upper()}",
-                "shodh-runner-python:1" if language == "python3" else "shodh-runner-cpp:1",
-            )
-            try:
-                runner.ensure_image(language, image)
-            except Exception as exc:
-                log.error("runner image unavailable", extra={"language": language, "error": str(exc)[:300]})
+        image = os.environ.get("RUNNER_IMAGE_PYTHON3", "shodh-runner-python:1")
+        try:
+            runner.ensure_image("python3", image)
+        except Exception as exc:
+            log.error("runner image unavailable", extra={"error": str(exc)[:300]})
 
     in_flight: set = set()
     lock = threading.Lock()
